@@ -1,0 +1,7 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": false,
+  "files.eol": "\n",
+  "tailwindCSS.experimental.classRegex": [],
+  "[prisma]": { "editor.defaultFormatter": "Prisma.prisma" }
+}

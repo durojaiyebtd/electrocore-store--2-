@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-white font-sans text-slate-800 antialiased;
+    font-feature-settings: 'ss01', 'tnum' 0;
+  }
+
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+
+  :focus-visible {
+    outline-color: theme('colors.brand.600');
+  }
+
+  input[type='search']::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  .field-input {
+    @apply h-12 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50;
+  }
+
+  .field-input[aria-invalid='true'] {
+    @apply border-rose-400 focus:border-rose-500 focus:ring-rose-100;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-sm text-rose-700;
+  }
+
+  .btn-primary {
+    @apply inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 text-base font-semibold text-white shadow-lift transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 text-base font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+  }
+
+  .prose-policy h2 {
+    @apply mt-10 text-xl font-semibold text-slate-900;
+  }
+
+  .prose-policy p,
+  .prose-policy li {
+    @apply mt-3 leading-relaxed text-slate-700;
+  }
+
+  .prose-policy ul {
+    @apply mt-3 list-disc space-y-1 pl-6;
+  }
+}
+
+/* Hero circuit traces draw in once on page load */
+@keyframes trace-draw {
+  from {
+    stroke-dashoffset: var(--trace-length, 600);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes node-on {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-trace {
+  stroke-dasharray: var(--trace-length, 600);
+  stroke-dashoffset: var(--trace-length, 600);
+  animation: trace-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.hero-node {
+  opacity: 0;
+  animation: node-on 0.4s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-trace {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .hero-node {
+    animation: none;
+    opacity: 1;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

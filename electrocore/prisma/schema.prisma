@@ -1,0 +1,376 @@
+// =============================================================================
+//  MAGNIFICENT ELECTROCORE SYNERGY LTD (RC No: 9792926) — Database schema
+//  Database: MongoDB (must run as a replica set — MongoDB Atlas or docker-compose.yml)
+//
+//  MONEY CONVENTION: every monetary field is an Int in the *minor unit* of the
+//  currency stated beside it. Catalog + order amounts are NGN kobo
+//  (₦1 = 100 kobo), which is also exactly what Paystack expects.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum CurrencyCode {
+  NGN
+  USD
+}
+
+enum FulfillmentType {
+  PHYSICAL // shipped to an address
+  DIGITAL // licence keys / downloads — no delivery fee
+  SERVICE // repair, assembly, development bookings — no delivery fee
+}
+
+enum InventoryReason {
+  INITIAL_STOCK
+  SUPPLIER_SYNC
+  SALE
+  RESTOCK
+  ADJUSTMENT
+  RETURN
+  OVERSOLD
+}
+
+enum OrderStatus {
+  PENDING // created, awaiting payment
+  PAID // payment confirmed by Paystack
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  FAILED // payment failed
+  REFUNDED
+}
+
+enum PaymentStatus {
+  INITIALIZED
+  SUCCESS
+  FAILED
+  ABANDONED
+  REVERSED
+  REFUNDED
+}
+
+// -----------------------------------------------------------------------------
+// Composite (embedded) types
+// -----------------------------------------------------------------------------
+
+type ProductSpec {
+  label String
+  value String
+}
+
+type VariantOption {
+  name  String // e.g. "Color", "Storage"
+  value String // e.g. "Space Gray", "512GB"
+}
+
+type CustomerInfo {
+  firstName String
+  lastName  String
+  phone     String
+}
+
+/// One entry in an order's status timeline (shown in the admin portal)
+type OrderEvent {
+  status OrderStatus
+  note   String?
+  /// email of the admin who made the change, or "system" / "paystack"
+  actor  String
+  at     DateTime
+}
+
+type Address {
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  country    String  @default("Nigeria")
+  postalCode String?
+}
+
+// -----------------------------------------------------------------------------
+// Users
+// -----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role     @default(CUSTOMER)
+  carts        Cart[]
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+// -----------------------------------------------------------------------------
+// Catalog
+// -----------------------------------------------------------------------------
+
+model Category {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String    @unique
+  description String
+  icon        String? // icon key used by the storefront
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  slug             String           @unique
+  name             String
+  brand            String
+  shortDescription String
+  description      String
+  images           String[]
+  specs            ProductSpec[]
+  tags             String[]
+  searchText       String // lower-cased name + brand + tags + category, used for search
+  /// Lowest active variant price, NGN kobo (denormalised for fast filter/sort)
+  price            Int
+  /// Matching compare-at ("was") price, NGN kobo
+  compareAtPrice   Int?
+  currency         CurrencyCode     @default(NGN)
+  /// Sum of all variant stock (denormalised for fast "in stock" filter)
+  totalStock       Int              @default(0)
+  fulfillment      FulfillmentType  @default(PHYSICAL)
+  warrantyMonths   Int              @default(0)
+  rating           Float            @default(0)
+  reviewCount      Int              @default(0)
+  featured         Boolean          @default(false)
+  isActive         Boolean          @default(true)
+
+  // ---- Reseller / supplier abstraction ----
+  /// Which supplier adapter owns this record: "mock", "http", ...
+  source           String           @default("mock")
+  /// The product's ID inside the supplier's system
+  externalId       String
+  lastSyncedAt     DateTime?
+
+  categoryId       String           @db.ObjectId
+  category         Category         @relation(fields: [categoryId], references: [id])
+  variants         ProductVariant[]
+  inventoryLogs    InventoryLog[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([source, externalId])
+  @@index([categoryId])
+  @@index([brand])
+  @@index([price])
+  @@map("products")
+}
+
+model ProductVariant {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  productId      String          @db.ObjectId
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku            String          @unique
+  externalId     String
+  name           String // human label, e.g. "Space Gray / 16GB / 512GB"
+  options        VariantOption[]
+  /// NGN kobo
+  price          Int
+  /// NGN kobo
+  compareAtPrice Int?
+  stock          Int             @default(0)
+  image          String?
+  isDefault      Boolean         @default(false)
+  isActive       Boolean         @default(true)
+  cartItems      CartItem[]
+  inventoryLogs  InventoryLog[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model InventoryLog {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  productId    String          @db.ObjectId
+  product      Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId    String          @db.ObjectId
+  variant      ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  /// Positive = stock added, negative = stock removed
+  change       Int
+  balanceAfter Int
+  reason       InventoryReason
+  /// Order number, supplier sync run ID, etc.
+  reference    String?
+  note         String?
+  /// email of the admin who made a manual adjustment
+  actor        String?
+  createdAt    DateTime        @default(now())
+
+  @@index([productId])
+  @@index([variantId])
+  @@map("inventory_logs")
+}
+
+// -----------------------------------------------------------------------------
+// Cart (guest carts are identified by an httpOnly cookie token)
+// -----------------------------------------------------------------------------
+
+model Cart {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  token     String     @unique
+  userId    String?    @db.ObjectId
+  user      User?      @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  cartId    String         @db.ObjectId
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String         @db.ObjectId
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([cartId, variantId])
+  @@map("cart_items")
+}
+
+// -----------------------------------------------------------------------------
+// Orders
+// -----------------------------------------------------------------------------
+
+model Order {
+  id              String                @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber     String                @unique
+  userId          String?               @db.ObjectId
+  user            User?                 @relation(fields: [userId], references: [id])
+  /// The cart this order was created from (cleared once payment succeeds)
+  cartId          String?               @db.ObjectId
+  email           String
+  customer        CustomerInfo
+  shippingAddress Address
+  notes           String?
+  /// All amounts below are NGN kobo
+  subtotal        Int
+  shippingFee     Int
+  discount        Int                   @default(0)
+  total           Int
+  currency        CurrencyCode          @default(NGN)
+  status          OrderStatus           @default(PENDING)
+  paidAt          DateTime?
+  /// Set when stock could not be fully deducted (needs manual review)
+  needsReview     Boolean               @default(false)
+  reviewReason    String?
+  /// Set when stock from this order was put back (cancel/refund) so it never happens twice
+  restockedAt     DateTime?
+  /// Status timeline: who changed what and when
+  events          OrderEvent[]
+  items           OrderItem[]
+  transactions    PaystackTransaction[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String          @db.ObjectId
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String          @db.ObjectId
+  variantId   String          @db.ObjectId
+  // Snapshot of what was bought (survives later catalog edits)
+  productName String
+  productSlug String
+  variantName String
+  sku         String
+  image       String?
+  fulfillment FulfillmentType
+  /// NGN kobo
+  unitPrice   Int
+  quantity    Int
+  /// NGN kobo
+  lineTotal   Int
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// -----------------------------------------------------------------------------
+// Payments (Paystack)
+// -----------------------------------------------------------------------------
+
+model PaystackTransaction {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  orderId          String        @db.ObjectId
+  order            Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reference        String        @unique
+  accessCode       String?
+  authorizationUrl String?
+  /// Amount sent to Paystack, in the minor unit of `currency` (kobo for NGN)
+  amount           Int
+  currency         CurrencyCode  @default(NGN)
+  status           PaymentStatus @default(INITIALIZED)
+  channel          String? // card, bank, ussd, bank_transfer ...
+  gatewayResponse  String?
+  customerEmail    String
+  paidAt           DateTime?
+  isMock           Boolean       @default(false)
+  rawInitialize    Json?
+  rawVerify        Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([orderId])
+  @@map("paystack_transactions")
+}
+
+/// Audit trail of every webhook Paystack sends (useful for disputes/debugging)
+model WebhookEvent {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  provider       String    @default("paystack")
+  event          String
+  reference      String?
+  signatureValid Boolean
+  payload        Json
+  processedAt    DateTime?
+  error          String?
+  createdAt      DateTime  @default(now())
+
+  @@index([reference])
+  @@map("webhook_events")
+}

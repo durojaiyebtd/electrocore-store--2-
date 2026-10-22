@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img">
+  <defs>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1a44"/>
+      <stop offset="0.55" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#132b7a"/>
+    </linearGradient>
+    <linearGradient id="glare" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.4" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bgLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <radialGradient id="bgDark" cx="0.5" cy="0.45" r="0.7">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="0.6" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="bgBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef5ff"/>
+      <stop offset="1" stop-color="#bcd6ff"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.18"/>
+    </pattern>
+  </defs><rect width="800" height="800" fill="url(#bgDark)"/><rect width="800" height="800" fill="url(#grid)" opacity="0.6"/><ellipse cx="400" cy="660" rx="240" ry="22" fill="#000000" opacity="0.35"/><g transform="rotate(-8 400 400) translate(20 0)">
+        <rect x="292" y="165" width="216" height="440" rx="36" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+        <rect x="306" y="180" width="188" height="410" rx="26" fill="#dde4fe"/>
+        <rect x="324" y="210" width="152" height="70" rx="14" fill="#1a4ef5"/>
+        <rect x="324" y="300" width="44" height="44" rx="12" fill="#1a4ef5" opacity="0.55"/><rect x="378" y="300" width="44" height="44" rx="12" fill="#22d3ee" opacity="0.7000000000000001"/><rect x="432" y="300" width="44" height="44" rx="12" fill="#1a4ef5" opacity="0.8500000000000001"/><rect x="324" y="362" width="44" height="44" rx="12" fill="#22d3ee" opacity="0.55"/><rect x="378" y="362" width="44" height="44" rx="12" fill="#1a4ef5" opacity="0.7000000000000001"/><rect x="432" y="362" width="44" height="44" rx="12" fill="#22d3ee" opacity="0.8500000000000001"/>
+        <rect x="324" y="440" width="152" height="12" rx="6" fill="#94a3b8"/>
+        <rect x="324" y="462" width="110" height="12" rx="6" fill="#cbd5e1"/>
+        <text x="530" y="250" font-family="monospace" font-size="56" font-weight="700" fill="#1a4ef5">&lt;/&gt;</text></g></svg>
