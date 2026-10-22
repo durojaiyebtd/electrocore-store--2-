@@ -59,7 +59,7 @@ function SalesChart({ days }: { days: DashboardDTO['salesByDay'] }) {
             return (
               <g key={day.date}>
                 <title>{`${date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}: ${formatMoney(day.revenue)} from ${day.orders} order${day.orders === 1 ? '' : 's'}`}</title>
-                <rect x={x} y={day.revenue > 0 ? y : pad.top + innerH - 2} width={barW} height={day.revenue > 0 ? Math.max(h, 2) : 2} rx="3" fill={isToday ? '#f5b942' : '#0d7a72'} opacity={day.revenue > 0 ? 1 : 0.25} />
+                <rect x={x} y={day.revenue > 0 ? y : pad.top + innerH - 2} width={barW} height={day.revenue > 0 ? Math.max(h, 2) : 2} rx="3" fill={isToday ? '#ffd23f' : '#d42073'} opacity={day.revenue > 0 ? 1 : 0.25} />
                 {index % 2 === days.length % 2 || isToday ? (
                   <text x={x + barW / 2} y={height - 8} textAnchor="middle" fontSize="11" fill="#64748b">
                     {isToday ? 'Today' : date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}

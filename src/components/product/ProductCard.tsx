@@ -42,7 +42,7 @@ export function ProductCard({ product, priority = false }: { product: ProductSum
         </Link>
         <div className="pointer-events-none absolute left-3 top-3 flex flex-col items-start gap-1.5">
           {saving > 0 ? <span className="rounded-md bg-brand-600 px-2 py-1 text-xs font-semibold text-white">−{saving}%</span> : null}
-          {!product.inStock ? <span className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white">Sold out</span> : null}
+          {!product.inStock ? <span className="rounded-md bg-slate-700 px-2 py-1 text-xs font-semibold text-white">Sold out</span> : null}
         </div>
         <button
           type="button"
@@ -74,7 +74,7 @@ export function ProductCard({ product, priority = false }: { product: ProductSum
               type="button"
               onClick={() => (singleVariant && product.defaultVariantId ? void addItem(product.defaultVariantId, 1) : openQuickView(product.slug))}
               disabled={adding}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-900 text-white transition hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:opacity-60"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-600 text-white transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:opacity-60"
               aria-label={singleVariant ? `Add ${product.name} to cart` : `Choose options for ${product.name}`}
               title={singleVariant ? 'Add to cart' : 'Choose options'}
             >

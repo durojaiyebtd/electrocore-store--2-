@@ -29,13 +29,13 @@
         <rect x="160" y="175" width="480" height="300" rx="14" fill="#1e293b" stroke="#404958" stroke-width="3"/>
         
     <rect x="174" y="189" width="452" height="272" rx="6" fill="url(#screen)"/>
-    <rect x="219.2" y="221.64" width="126.56000000000002" height="21.76" rx="4" fill="#f5b942" opacity="0.85"/>
+    <rect x="219.2" y="221.64" width="126.56000000000002" height="21.76" rx="4" fill="#ffd23f" opacity="0.85"/>
     <rect x="219.2" y="270.6" width="248.60000000000002" height="12.24" rx="3" fill="#ffffff" opacity="0.18"/><rect x="219.2" y="305.96000000000004" width="171.76" height="12.24" rx="3" fill="#ffffff" opacity="0.15"/><rect x="219.2" y="341.32000000000005" width="248.60000000000002" height="12.24" rx="3" fill="#ffffff" opacity="0.12"/><rect x="219.2" y="376.68" width="171.76" height="12.24" rx="3" fill="#ffffff" opacity="0.09"/>
-    <circle cx="526.56" cy="346.76" r="43.52" fill="none" stroke="#0d7a72" stroke-width="9.040000000000001" opacity="0.9"/>
-    <path d="M526.56 303.24 A 43.52 43.52 0 0 1 570.0799999999999 346.76" fill="none" stroke="#f5b942" stroke-width="9.040000000000001"/>
+    <circle cx="526.56" cy="346.76" r="43.52" fill="none" stroke="#d42073" stroke-width="9.040000000000001" opacity="0.9"/>
+    <path d="M526.56 303.24 A 43.52 43.52 0 0 1 570.0799999999999 346.76" fill="none" stroke="#ffd23f" stroke-width="9.040000000000001"/>
     <rect x="174" y="189" width="452" height="272" rx="6" fill="url(#glare)"/>
         <path d="M375 475 H425 L440 560 H360 Z" fill="#565f6c"/>
         <rect x="290" y="556" width="220" height="20" rx="10" fill="#565f6c" stroke="#404958" stroke-width="2"/></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

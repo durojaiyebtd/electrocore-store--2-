@@ -864,7 +864,7 @@ export const MOCK_PRODUCTS: MockProductDef[] = [
       ] },
     ],
     stock: 9999,
-    art: { kind: 'software', color: '#0d7a72' },
+    art: { kind: 'software', color: '#d42073' },
   },
   {
     id: 'MOCK-0026',
@@ -923,7 +923,7 @@ export const MOCK_PRODUCTS: MockProductDef[] = [
     skuPrefix: 'EC-MAD',
     axes: [],
     stock: 9999,
-    art: { kind: 'app', color: '#0d7a72' },
+    art: { kind: 'app', color: '#d42073' },
   },
 
   // ---------------------------------------------------------------- Repair & Services
@@ -958,7 +958,7 @@ export const MOCK_PRODUCTS: MockProductDef[] = [
       ] },
     ],
     stock: 9999,
-    art: { kind: 'service', color: '#0d7a72' },
+    art: { kind: 'service', color: '#d42073' },
   },
   {
     id: 'MOCK-0029',

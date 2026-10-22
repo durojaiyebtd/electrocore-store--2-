@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils';
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={cn('h-9 w-9', className)} aria-hidden="true" focusable="false">
-      <rect width="40" height="40" rx="10" fill="#0d7a72" />
+      <rect width="40" height="40" rx="10" fill="#d42073" />
       <path d="M20 6v7M20 27v7M6 20h7M27 20h7" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" />
       <circle cx="20" cy="20" r="6.5" fill="none" stroke="#ffffff" strokeWidth="2.6" />
-      <circle cx="20" cy="20" r="2.4" fill="#f5b942" />
+      <circle cx="20" cy="20" r="2.4" fill="#ffd23f" />
     </svg>
   );
 }

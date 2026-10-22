@@ -27,11 +27,11 @@
     </pattern>
   </defs><rect width="800" height="800" fill="url(#bgLight)"/><rect width="800" height="800" fill="url(#grid)"/><ellipse cx="400" cy="660" rx="260" ry="26" fill="#0f172a" opacity="0.10"/>
         <g transform="translate(400 400)">
-          <circle r="150" fill="none" stroke="#0d7a72" stroke-width="40" stroke-dasharray="52 26"/>
-          <circle r="95" fill="#dbebea" stroke="#0d7a72" stroke-width="10"/>
+          <circle r="150" fill="none" stroke="#d42073" stroke-width="40" stroke-dasharray="52 26"/>
+          <circle r="95" fill="#f9deea" stroke="#d42073" stroke-width="10"/>
           <g transform="rotate(-45)">
             <rect x="-22" y="-150" width="44" height="230" rx="18" fill="#334155"/>
             <path d="M-60 -170 a60 60 0 1 0 120 0 l-30 0 l0 36 l-60 0 l0 -36 z" fill="#334155"/>
           </g>
-          <circle r="20" fill="#f5b942"/>
+          <circle r="20" fill="#ffd23f"/>
         </g></svg>

@@ -65,7 +65,7 @@ npm run dev
 - **Product pictures:** 77 of the 78 products have a picture in `public/images/products/<category-slug>/`. They were cut from your
   product-picture sheet, so they are small (about 120 px originals, enlarged to 480 px) and look soft when zoomed. Replace any file with a
   sharper one of the same name to improve it. **`DeckLink Mini Monitor 4K` has no picture** (it was not on the sheet) and shows a name tile.
-- **Homepage banner:** `public/images/site/banner.jpg` (your banner recoloured to teal; the original is kept as `banner-original-blue.jpg`).
+- **Homepage banner:** `public/images/site/banner.jpg` (your banner recoloured to bright pink; the original is kept as `banner-original-blue.jpg`).
 - **Homepage hero picture (optional):** save a picture as `public/images/site/hero.jpg`; until then the built-in laptop illustration shows.
 - After changing pictures, run `npm run catalog:technocrat` again so the database picks them up.
 

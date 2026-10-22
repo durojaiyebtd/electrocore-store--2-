@@ -38,54 +38,54 @@ export async function Footer() {
   const address = formattedAddress();
 
   return (
-    <footer className="mt-auto bg-slate-950 text-slate-300" aria-labelledby="footer-heading">
+    <footer className="mt-auto border-t-4 border-brand-500 bg-brand-50 text-slate-700" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <Logo inverted />
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">{site.description}</p>
+            <Logo />
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-600">{site.description}</p>
             <ul className="mt-6 space-y-3 text-sm">
               {address ? (
                 <li className="flex gap-3">
-                  <MapPinIcon size={18} className="mt-0.5 shrink-0 text-brand-400" />
+                  <MapPinIcon size={18} className="mt-0.5 shrink-0 text-brand-600" />
                   <span>{address}</span>
                 </li>
               ) : null}
               {site.supportPhone ? (
                 <li className="flex gap-3">
-                  <PhoneCallIcon size={18} className="mt-0.5 shrink-0 text-brand-400" />
-                  <a href={`tel:${site.supportPhone.replace(/\s+/g, '')}`} className="hover:text-white">
+                  <PhoneCallIcon size={18} className="mt-0.5 shrink-0 text-brand-600" />
+                  <a href={`tel:${site.supportPhone.replace(/\s+/g, '')}`} className="hover:text-brand-700">
                     {site.supportPhone}
                   </a>
                 </li>
               ) : null}
               <li className="flex gap-3">
-                <MailIcon size={18} className="mt-0.5 shrink-0 text-brand-400" />
-                <a href={`mailto:${site.supportEmail}`} className="hover:text-white">
+                <MailIcon size={18} className="mt-0.5 shrink-0 text-brand-600" />
+                <a href={`mailto:${site.supportEmail}`} className="hover:text-brand-700">
                   {site.supportEmail}
                 </a>
               </li>
               <li className="flex gap-3">
-                <ClockIcon size={18} className="mt-0.5 shrink-0 text-brand-400" />
+                <ClockIcon size={18} className="mt-0.5 shrink-0 text-brand-600" />
                 <span>{site.businessHours}</span>
               </li>
             </ul>
           </div>
 
           <nav aria-label="Shop categories" className="lg:col-span-3 lg:col-start-6">
-            <h3 className="text-sm font-semibold text-white">Shop</h3>
+            <h3 className="text-sm font-semibold text-slate-900">Shop</h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <Link href="/shop" className="hover:text-white">
+                <Link href="/shop" className="hover:text-brand-700">
                   All products
                 </Link>
               </li>
               {categories.map((category) => (
                 <li key={category.slug}>
-                  <Link href={`/shop?category=${category.slug}`} className="hover:text-white">
+                  <Link href={`/shop?category=${category.slug}`} className="hover:text-brand-700">
                     {category.name}
                   </Link>
                 </li>
@@ -94,11 +94,11 @@ export async function Footer() {
           </nav>
 
           <nav aria-label="Company" className="lg:col-span-2">
-            <h3 className="text-sm font-semibold text-white">Company</h3>
+            <h3 className="text-sm font-semibold text-slate-900">Company</h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               {COMPANY_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-white">
+                  <Link href={link.href} className="hover:text-brand-700">
                     {link.label}
                   </Link>
                 </li>
@@ -107,11 +107,11 @@ export async function Footer() {
           </nav>
 
           <nav aria-label="Policies" className="lg:col-span-2">
-            <h3 className="text-sm font-semibold text-white">Policies</h3>
+            <h3 className="text-sm font-semibold text-slate-900">Policies</h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               {POLICY_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-white">
+                  <Link href={link.href} className="hover:text-brand-700">
                     {link.label}
                   </Link>
                 </li>
@@ -120,22 +120,22 @@ export async function Footer() {
           </nav>
         </div>
 
-        <div className="mt-12 grid gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-5 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
+        <div className="mt-12 grid gap-4 rounded-xl border border-brand-200 bg-white p-5 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
           <div>
-            <p className="font-semibold text-white">{site.legalName}</p>
-            <p className="mt-1 text-slate-400">
-              RC No: <span className="font-mono text-slate-200">{site.rcNumber}</span>. Registered with the {site.registry}.
+            <p className="font-semibold text-slate-900">{site.legalName}</p>
+            <p className="mt-1 text-slate-600">
+              RC No: <span className="font-mono text-slate-900">{site.rcNumber}</span>. Registered with the {site.registry}.
             </p>
           </div>
-          <p className="flex items-center gap-2 text-slate-400">
-            <LockIcon size={18} className="text-brand-400" />
+          <p className="flex items-center gap-2 text-slate-600">
+            <LockIcon size={18} className="text-brand-600" />
             Payments processed securely by Paystack
           </p>
         </div>
       </div>
 
-      <div className="border-t border-slate-800">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className="border-t border-brand-200">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>
             © {year} {site.legalName} (RC No: {site.rcNumber}). All rights reserved.
           </p>

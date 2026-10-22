@@ -173,7 +173,7 @@ export function CheckoutView() {
               <span
                 className={cn(
                   'grid h-6 w-6 place-items-center rounded-full text-xs font-semibold',
-                  index < 1 ? 'bg-brand-600 text-white' : index === 1 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600',
+                  index < 1 ? 'bg-brand-600 text-white' : index === 1 ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-600',
                 )}
               >
                 {index + 1}
@@ -259,7 +259,7 @@ export function CheckoutView() {
               <li key={item.id} className="flex gap-3 py-3">
                 <div className="relative h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white">
                   <ProductImage src={item.image} alt="" className="h-full w-full rounded-lg object-contain" />
-                  <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-slate-700 px-1 text-[0.7rem] font-semibold text-white">
+                  <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-brand-500 px-1 text-[0.7rem] font-semibold text-white">
                     {item.quantity}
                   </span>
                 </div>

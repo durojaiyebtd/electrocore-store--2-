@@ -29,9 +29,9 @@
         <rect x="185" y="215" width="430" height="300" rx="28" fill="#334155" stroke="#525e6f" stroke-width="3"/>
         
     <rect x="203" y="233" width="394" height="264" rx="14" fill="url(#screen)"/>
-    <rect x="242.4" y="264.68" width="110.32000000000001" height="21.12" rx="4" fill="#f5b942" opacity="0.85"/>
+    <rect x="242.4" y="264.68" width="110.32000000000001" height="21.12" rx="4" fill="#ffd23f" opacity="0.85"/>
     <rect x="242.4" y="312.2" width="216.70000000000002" height="11.879999999999999" rx="3" fill="#ffffff" opacity="0.18"/><rect x="242.4" y="346.52" width="149.72" height="11.879999999999999" rx="3" fill="#ffffff" opacity="0.15"/><rect x="242.4" y="380.84" width="216.70000000000002" height="11.879999999999999" rx="3" fill="#ffffff" opacity="0.12"/><rect x="242.4" y="415.15999999999997" width="149.72" height="11.879999999999999" rx="3" fill="#ffffff" opacity="0.09"/>
-    <circle cx="510.32" cy="386.12" r="42.24" fill="none" stroke="#0d7a72" stroke-width="7.88" opacity="0.9"/>
-    <path d="M510.32 343.88 A 42.24 42.24 0 0 1 552.56 386.12" fill="none" stroke="#f5b942" stroke-width="7.88"/>
+    <circle cx="510.32" cy="386.12" r="42.24" fill="none" stroke="#d42073" stroke-width="7.88" opacity="0.9"/>
+    <path d="M510.32 343.88 A 42.24 42.24 0 0 1 552.56 386.12" fill="none" stroke="#ffd23f" stroke-width="7.88"/>
     <rect x="203" y="233" width="394" height="264" rx="14" fill="url(#glare)"/>
-        <rect x="400" y="530" width="14" height="70" rx="7" transform="rotate(35 407 565)" fill="#0d7a72"/></g></svg>
+        <rect x="400" y="530" width="14" height="70" rx="7" transform="rotate(35 407 565)" fill="#d42073"/></g></svg>

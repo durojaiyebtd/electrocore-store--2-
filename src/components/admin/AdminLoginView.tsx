@@ -43,13 +43,13 @@ export function AdminLoginView() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-slate-950 px-4 py-16">
+    <main className="flex flex-1 items-center justify-center bg-gradient-to-br from-brand-100 via-white to-amber-100 px-4 py-16">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-3">
           <LogoMark className="h-10 w-10" />
           <div className="leading-tight">
-            <p className="font-bold text-white">ElectroCore</p>
-            <p className="text-sm text-slate-400">Admin portal</p>
+            <p className="font-bold text-slate-900">ElectroCore</p>
+            <p className="text-sm text-slate-500">Admin portal</p>
           </div>
         </div>
 
@@ -77,8 +77,8 @@ export function AdminLoginView() {
             Sign in to admin
           </button>
         </form>
-        <p className="mt-6 text-center text-sm text-slate-400">
-          <Link href="/" className="underline-offset-4 hover:text-white hover:underline">
+        <p className="mt-6 text-center text-sm text-slate-500">
+          <Link href="/" className="underline-offset-4 hover:text-brand-700 hover:underline">
             Back to the store
           </Link>
         </p>

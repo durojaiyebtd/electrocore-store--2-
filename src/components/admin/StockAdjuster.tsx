@@ -65,7 +65,7 @@ export function StockAdjuster({ variantId, label, currentStock, onDone, onCancel
                 setMode(value);
                 setReason(value === 'add' ? 'RESTOCK' : 'ADJUSTMENT');
               }}
-              className={cn('h-10 flex-1 px-3 font-medium', mode === value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50')}
+              className={cn('h-10 flex-1 px-3 font-medium', mode === value ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-50')}
             >
               {value === 'add' ? 'Add' : value === 'remove' ? 'Remove' : 'Set to'}
             </button>

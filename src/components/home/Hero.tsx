@@ -27,24 +27,24 @@ const PROOF = ['Every device inspected before dispatch', 'Secure Paystack checko
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-slate-950 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-amber-50 text-slate-900">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.12]"
+        className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
           backgroundImage:
-            'linear-gradient(to right, #334155 1px, transparent 1px), linear-gradient(to bottom, #334155 1px, transparent 1px)',
+            'linear-gradient(to right, #f95ea0 1px, transparent 1px), linear-gradient(to bottom, #f95ea0 1px, transparent 1px)',
           backgroundSize: '48px 48px',
         }}
         aria-hidden="true"
       />
-      <div className="pointer-events-none absolute -right-40 top-10 h-[520px] w-[520px] rounded-full bg-brand-600/30 blur-[120px]" aria-hidden="true" />
+      <div className="pointer-events-none absolute -right-40 top-10 h-[520px] w-[520px] rounded-full bg-brand-300/50 blur-[120px]" aria-hidden="true" />
 
       <div className="container-page relative grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:gap-20 lg:py-24">
         <div className="relative z-10 max-w-xl">
           <h1 className="text-[2.5rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.6rem]">
             Electronics engineered, assembled and serviced for Nigeria.
           </h1>
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-300">
+          <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-600">
             Business laptops, phones, solar and backup power, components and software — sold, installed and repaired by
             the same engineering team.
           </p>
@@ -54,15 +54,15 @@ export function Hero() {
             </Link>
             <Link
               href="/shop?category=repair-services"
-              className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-600 px-6 text-base font-semibold text-white transition hover:border-slate-400 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-brand-600 px-6 text-base font-semibold text-brand-700 transition hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
             >
               Book a repair
             </Link>
           </div>
-          <ul className="mt-10 grid gap-3 text-sm text-slate-300">
+          <ul className="mt-10 grid gap-3 text-sm text-slate-700">
             {PROOF.map((item) => (
               <li key={item} className="flex items-center gap-3">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-600/20 text-volt-400">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-volt-400 text-slate-900">
                   <CheckIcon size={14} />
                 </span>
                 {item}
@@ -79,20 +79,20 @@ export function Hero() {
                 d={trace.d}
                 className="hero-trace"
                 fill="none"
-                stroke="#1aab9b"
+                stroke="#ec3a85"
                 strokeWidth="2"
                 style={{ '--trace-length': trace.length, animationDelay: `${trace.delay}s` } as CSSProperties}
               />
             ))}
             {NODES.map((node) => (
-              <circle key={`${node.cx}-${node.cy}`} cx={node.cx} cy={node.cy} r="4" fill="#f5b942" className="hero-node" style={{ animationDelay: `${node.delay}s` }} />
+              <circle key={`${node.cx}-${node.cy}`} cx={node.cx} cy={node.cy} r="4" fill="#ffd23f" className="hero-node" style={{ animationDelay: `${node.delay}s` }} />
             ))}
           </svg>
 
-          <div className="relative rounded-2xl border border-slate-700/80 bg-slate-900/70 p-3 shadow-2xl shadow-brand-950/60 backdrop-blur">
-            <div className="flex items-center justify-between px-2 pb-3 pt-1 text-xs text-slate-400">
+          <div className="relative rounded-2xl border border-brand-100 bg-white p-3 shadow-2xl shadow-brand-500/25">
+            <div className="flex items-center justify-between px-2 pb-3 pt-1 text-xs text-slate-500">
               <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
                 Bench test passed
               </span>
               <span className="font-mono">ProBook 14 · burn-in 24h</span>
@@ -104,9 +104,9 @@ export function Hero() {
                 ['Battery', '98% health'],
                 ['Display', '0 dead pixels'],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-lg bg-slate-800/70 px-2 py-2.5">
-                  <dt className="text-[0.7rem] text-slate-400">{label}</dt>
-                  <dd className="mt-0.5 text-sm font-semibold text-white">{value}</dd>
+                <div key={label} className="rounded-lg bg-brand-50 px-2 py-2.5">
+                  <dt className="text-[0.7rem] text-slate-500">{label}</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-slate-900">{value}</dd>
                 </div>
               ))}
             </dl>

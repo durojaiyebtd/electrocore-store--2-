@@ -28,9 +28,9 @@
   </defs><rect width="800" height="800" fill="url(#bgBlue)"/><g transform="translate(400 400) scale(1.55) translate(-400 -400) translate(40 30)">
         <rect x="280" y="200" width="240" height="400" rx="36" fill="#1f2937" stroke="#414955" stroke-width="3"/>
         <rect x="320" y="250" width="160" height="80" rx="14" fill="#020617"/>
-        <text x="400" y="304" text-anchor="middle" font-family="monospace" font-size="44" font-weight="700" fill="#f5b942">87%</text>
-        <circle cx="352" cy="372" r="7" fill="#f5b942"/><circle cx="384" cy="372" r="7" fill="#f5b942"/><circle cx="416" cy="372" r="7" fill="#f5b942"/><circle cx="448" cy="372" r="7" fill="#575f69"/>
+        <text x="400" y="304" text-anchor="middle" font-family="monospace" font-size="44" font-weight="700" fill="#ffd23f">87%</text>
+        <circle cx="352" cy="372" r="7" fill="#ffd23f"/><circle cx="384" cy="372" r="7" fill="#ffd23f"/><circle cx="416" cy="372" r="7" fill="#ffd23f"/><circle cx="448" cy="372" r="7" fill="#575f69"/>
         <rect x="350" y="580" width="100" height="10" rx="5" fill="#141b24"/></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

@@ -10,8 +10,8 @@ import { join } from 'path';
 import { MOCK_PRODUCTS, type ArtKind } from '../src/lib/suppliers/mock-catalog';
 
 const OUT_DIR = join(process.cwd(), 'public', 'products');
-const BLUE = '#0d7a72'; // brand teal
-const CYAN = '#f5b942'; // accent amber
+const BLUE = '#d42073'; // brand plum
+const CYAN = '#ffd23f'; // accent gold
 
 function clamp(n: number): number {
   return Math.max(0, Math.min(255, Math.round(n)));

@@ -30,15 +30,15 @@
         
           <circle cx="230" cy="400" r="74" fill="#0b1019" stroke="#4d525d" stroke-width="3"/>
           <path d="M230 400 L292 400" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M230 400 L268.65636771524146 448.47355191301784" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M230 400 L216.20370209470852 460.4455305552731" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M230 400 L174.13993019005002 426.9007918252886" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M230 400 L174.13993019005002 373.0992081747114" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M230 400 L216.2037020947085 339.5544694447269" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M230 400 L268.65636771524146 351.52644808698216" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
-          <circle cx="230" cy="400" r="18" fill="#0d7a72"/>
+          <circle cx="230" cy="400" r="18" fill="#d42073"/>
           <circle cx="400" cy="400" r="74" fill="#0b1019" stroke="#4d525d" stroke-width="3"/>
           <path d="M400 400 L462 400" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M400 400 L438.65636771524146 448.47355191301784" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M400 400 L386.2037020947085 460.4455305552731" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M400 400 L344.13993019005 426.9007918252886" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M400 400 L344.13993019005 373.0992081747114" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M400 400 L386.2037020947085 339.5544694447269" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M400 400 L438.65636771524146 351.52644808698216" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
-          <circle cx="400" cy="400" r="18" fill="#0d7a72"/>
+          <circle cx="400" cy="400" r="18" fill="#d42073"/>
           <circle cx="570" cy="400" r="74" fill="#0b1019" stroke="#4d525d" stroke-width="3"/>
           <path d="M570 400 L632 400" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M570 400 L608.6563677152415 448.47355191301784" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M570 400 L556.2037020947085 460.4455305552731" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M570 400 L514.13993019005 426.9007918252886" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M570 400 L514.13993019005 373.0992081747114" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M570 400 L556.2037020947085 339.5544694447269" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M570 400 L608.6563677152415 351.52644808698216" stroke="#4d525d" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
-          <circle cx="570" cy="400" r="18" fill="#0d7a72"/>
+          <circle cx="570" cy="400" r="18" fill="#d42073"/>
         <rect x="200" y="510" width="260" height="22" fill="#d4a017"/>
-        <rect x="120" y="296" width="560" height="10" rx="5" fill="#f5b942" opacity="0.8"/></g>
+        <rect x="120" y="296" width="560" height="10" rx="5" fill="#ffd23f" opacity="0.8"/></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

@@ -28,7 +28,7 @@
   </defs><rect width="800" height="800" fill="url(#bgLight)"/><rect width="800" height="800" fill="url(#grid)"/><ellipse cx="400" cy="660" rx="260" ry="26" fill="#0f172a" opacity="0.10"/>
         <rect x="270" y="380" width="260" height="190" rx="80" fill="#1f2937" stroke="#414955" stroke-width="3"/>
         <line x1="285" y1="440" x2="515" y2="440" stroke="#414955" stroke-width="3"/>
-        <circle cx="400" cy="505" r="7" fill="#0d7a72"/>
+        <circle cx="400" cy="505" r="7" fill="#d42073"/>
         <g transform="translate(300 230) rotate(-12)">
           <circle cx="0" cy="0" r="45" fill="#1f2937" stroke="#414955" stroke-width="3"/>
           <rect x="-16" y="20" width="32" height="105" rx="16" fill="#1f2937" stroke="#414955" stroke-width="3"/>

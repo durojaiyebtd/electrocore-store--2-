@@ -29,13 +29,13 @@
         <rect x="292" y="165" width="216" height="440" rx="36" fill="#111827" stroke="#353b47" stroke-width="3"/>
         
     <rect x="306" y="180" width="188" height="410" rx="26" fill="url(#screen)"/>
-    <rect x="324.8" y="229.2" width="52.64000000000001" height="32.8" rx="4" fill="#f5b942" opacity="0.85"/>
+    <rect x="324.8" y="229.2" width="52.64000000000001" height="32.8" rx="4" fill="#ffd23f" opacity="0.85"/>
     <rect x="324.8" y="303" width="103.4" height="18.45" rx="3" fill="#ffffff" opacity="0.18"/><rect x="324.8" y="356.3" width="71.44" height="18.45" rx="3" fill="#ffffff" opacity="0.15"/><rect x="324.8" y="409.6" width="103.4" height="18.45" rx="3" fill="#ffffff" opacity="0.12"/><rect x="324.8" y="462.9" width="71.44" height="18.45" rx="3" fill="#ffffff" opacity="0.09"/>
-    <circle cx="452.64" cy="417.79999999999995" r="30.080000000000002" fill="none" stroke="#0d7a72" stroke-width="3.7600000000000002" opacity="0.9"/>
-    <path d="M452.64 387.71999999999997 A 30.080000000000002 30.080000000000002 0 0 1 482.71999999999997 417.79999999999995" fill="none" stroke="#f5b942" stroke-width="3.7600000000000002"/>
+    <circle cx="452.64" cy="417.79999999999995" r="30.080000000000002" fill="none" stroke="#d42073" stroke-width="3.7600000000000002" opacity="0.9"/>
+    <path d="M452.64 387.71999999999997 A 30.080000000000002 30.080000000000002 0 0 1 482.71999999999997 417.79999999999995" fill="none" stroke="#ffd23f" stroke-width="3.7600000000000002"/>
     <rect x="306" y="180" width="188" height="410" rx="26" fill="url(#glare)"/>
         <rect x="370" y="192" width="60" height="12" rx="6" fill="#020617"/>
         <rect x="508" y="270" width="5" height="60" rx="2" fill="#0b1019"/></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

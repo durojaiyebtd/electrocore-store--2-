@@ -41,7 +41,7 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
-                active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white',
+                active ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700',
               )}
             >
               <Icon size={18} className={active ? 'text-volt-400' : undefined} />
@@ -80,21 +80,21 @@ export function AdminShell({ admin, children }: AdminShellProps) {
           {admin.lastName.charAt(0)}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-white">
+          <p className="truncate text-sm font-medium text-slate-900">
             {admin.firstName} {admin.lastName}
           </p>
-          <p className="truncate text-xs text-slate-400">{admin.email}</p>
+          <p className="truncate text-xs text-slate-500">{admin.email}</p>
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <Link href="/" className="flex h-9 items-center justify-center rounded-md border border-white/15 text-xs font-semibold text-slate-200 hover:bg-white/5">
+        <Link href="/" className="flex h-9 items-center justify-center rounded-md border border-brand-200 text-xs font-semibold text-brand-700 hover:bg-brand-50">
           View store
         </Link>
         <button
           type="button"
           onClick={signOut}
           disabled={signingOut}
-          className="flex h-9 items-center justify-center rounded-md border border-white/15 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-50"
+          className="flex h-9 items-center justify-center rounded-md border border-brand-200 text-xs font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-50"
         >
           Sign out
         </button>
@@ -106,15 +106,15 @@ export function AdminShell({ admin, children }: AdminShellProps) {
     <Link href="/admin" className="flex items-center gap-2.5 px-2">
       <LogoMark className="h-8 w-8" />
       <span className="leading-tight">
-        <span className="block text-sm font-bold text-white">ElectroCore</span>
-        <span className="block text-xs text-slate-400">Admin portal</span>
+        <span className="block text-sm font-bold text-slate-900">ElectroCore</span>
+        <span className="block text-xs text-slate-500">Admin portal</span>
       </span>
     </Link>
   );
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-slate-950 lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-brand-100 bg-white lg:flex">
         <div className="flex h-16 items-center px-3">{brand}</div>
         <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-2">
           <NavLinks pathname={pathname} />
@@ -123,11 +123,11 @@ export function AdminShell({ admin, children }: AdminShellProps) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-800 bg-slate-950 px-4 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-brand-100 bg-white px-4 lg:hidden">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-lg text-slate-200 hover:bg-white/10"
+            className="grid h-10 w-10 place-items-center rounded-lg text-slate-700 hover:bg-brand-50"
             aria-label="Open admin menu"
             aria-expanded={menuOpen}
           >
@@ -141,11 +141,11 @@ export function AdminShell({ admin, children }: AdminShellProps) {
 
       {menuOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
-          <div className="absolute inset-0 bg-slate-950/60" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-          <div role="dialog" aria-modal="true" aria-label="Admin menu" className="absolute inset-y-0 left-0 flex w-72 animate-slide-in-left flex-col bg-slate-950 motion-reduce:animate-none">
+          <div className="absolute inset-0 bg-slate-900/30" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" aria-label="Admin menu" className="absolute inset-y-0 left-0 flex w-72 animate-slide-in-left flex-col bg-white motion-reduce:animate-none">
             <div className="flex h-14 items-center justify-between px-3">
               {brand}
-              <button type="button" onClick={() => setMenuOpen(false)} className="grid h-10 w-10 place-items-center rounded-lg text-slate-300 hover:bg-white/10" aria-label="Close menu">
+              <button type="button" onClick={() => setMenuOpen(false)} className="grid h-10 w-10 place-items-center rounded-lg text-slate-700 hover:bg-brand-50" aria-label="Close menu">
                 <CloseIcon />
               </button>
             </div>

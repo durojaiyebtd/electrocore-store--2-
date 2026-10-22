@@ -26,12 +26,12 @@
       <path d="M40 0 H0 V40" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.18"/>
     </pattern>
   </defs><rect width="800" height="800" fill="url(#bgBlue)"/><g transform="translate(400 400) scale(1.55) translate(-400 -400) translate(40 30)">
-        <path d="M300 180 L520 180 L560 210 L560 610 L340 610 L300 580 Z" fill="#095550"/>
-        <rect x="300" y="180" width="220" height="400" rx="6" fill="#0d7a72"/>
+        <path d="M300 180 L520 180 L560 210 L560 610 L340 610 L300 580 Z" fill="#941651"/>
+        <rect x="300" y="180" width="220" height="400" rx="6" fill="#d42073"/>
         <path d="M410 250 L470 275 V340 C470 385 440 412 410 425 C380 412 350 385 350 340 V275 Z" fill="#ffffff" opacity="0.95"/>
-        <path d="M385 335 L404 354 L438 318" fill="none" stroke="#0d7a72" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M385 335 L404 354 L438 318" fill="none" stroke="#d42073" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
         <rect x="330" y="470" width="160" height="16" rx="6" fill="#ffffff" opacity="0.85"/>
         <rect x="330" y="500" width="110" height="12" rx="6" fill="#ffffff" opacity="0.5"/></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

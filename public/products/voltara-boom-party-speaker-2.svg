@@ -29,6 +29,6 @@
         <rect x="285" y="160" width="230" height="460" rx="40" fill="#111827" stroke="#353b47" stroke-width="3"/>
         <circle cx="400" cy="290" r="62" fill="#0b1019" stroke="#4d525d" stroke-width="4"/>
         <circle cx="400" cy="290" r="22" fill="#4d525d"/>
-        <circle cx="400" cy="470" r="86" fill="#0b1019" stroke="#0d7a72" stroke-width="8"/>
+        <circle cx="400" cy="470" r="86" fill="#0b1019" stroke="#d42073" stroke-width="8"/>
         <circle cx="400" cy="470" r="32" fill="#4d525d"/>
-        <circle cx="400" cy="470" r="100" fill="none" stroke="#f5b942" stroke-width="4" opacity="0.6"/></g></svg>
+        <circle cx="400" cy="470" r="100" fill="none" stroke="#ffd23f" stroke-width="4" opacity="0.6"/></g></svg>

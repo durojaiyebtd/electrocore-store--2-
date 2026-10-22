@@ -313,7 +313,7 @@ export function ShopView() {
                       aria-current={n === page ? 'page' : undefined}
                       className={cn(
                         'h-10 min-w-10 rounded-lg px-3 text-sm font-semibold tabular-nums',
-                        n === page ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-700 hover:bg-slate-50',
+                        n === page ? 'bg-brand-600 text-white' : 'border border-slate-300 text-slate-700 hover:bg-slate-50',
                       )}
                     >
                       {n}
@@ -337,7 +337,7 @@ export function ShopView() {
 
       {filtersOpen ? (
         <div className="fixed inset-0 z-[80] lg:hidden" role="presentation">
-          <div className="absolute inset-0 animate-fade-in bg-slate-950/50" onClick={() => setFiltersOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-0 animate-fade-in bg-slate-900/30" onClick={() => setFiltersOpen(false)} aria-hidden="true" />
           <div
             role="dialog"
             aria-modal="true"

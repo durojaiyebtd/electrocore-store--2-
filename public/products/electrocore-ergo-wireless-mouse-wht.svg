@@ -29,4 +29,4 @@
         <path d="M400 190 C500 190 525 290 525 420 C525 545 470 610 400 610 C330 610 275 545 275 420 C275 290 300 190 400 190 Z" fill="#e5e7eb" stroke="#b7b9bc" stroke-width="3"/>
         <line x1="400" y1="192" x2="400" y2="350" stroke="#b7b9bc" stroke-width="3"/>
         <rect x="388" y="250" width="24" height="56" rx="12" fill="#959699"/>
-        <rect x="392" y="262" width="16" height="12" rx="4" fill="#f5b942"/></svg>
+        <rect x="392" y="262" width="16" height="12" rx="4" fill="#ffd23f"/></svg>

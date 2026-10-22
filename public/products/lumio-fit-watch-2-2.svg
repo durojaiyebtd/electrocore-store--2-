@@ -31,9 +31,9 @@
         <rect x="290" y="270" width="220" height="260" rx="60" fill="#0f172a" stroke="#333a4a" stroke-width="4"/>
         
     <rect x="312" y="292" width="176" height="216" rx="44" fill="url(#screen)"/>
-    <rect x="329.6" y="317.92" width="49.28" height="17.28" rx="4" fill="#f5b942" opacity="0.85"/>
+    <rect x="329.6" y="317.92" width="49.28" height="17.28" rx="4" fill="#ffd23f" opacity="0.85"/>
     <rect x="329.6" y="356.8" width="96.80000000000001" height="9.719999999999999" rx="3" fill="#ffffff" opacity="0.18"/><rect x="329.6" y="384.88" width="66.88" height="9.719999999999999" rx="3" fill="#ffffff" opacity="0.15"/><rect x="329.6" y="412.96000000000004" width="96.80000000000001" height="9.719999999999999" rx="3" fill="#ffffff" opacity="0.12"/><rect x="329.6" y="441.04" width="66.88" height="9.719999999999999" rx="3" fill="#ffffff" opacity="0.09"/>
-    <circle cx="449.28" cy="417.28" r="28.16" fill="none" stroke="#0d7a72" stroke-width="3.52" opacity="0.9"/>
-    <path d="M449.28 389.11999999999995 A 28.16 28.16 0 0 1 477.44 417.28" fill="none" stroke="#f5b942" stroke-width="3.52"/>
+    <circle cx="449.28" cy="417.28" r="28.16" fill="none" stroke="#d42073" stroke-width="3.52" opacity="0.9"/>
+    <path d="M449.28 389.11999999999995 A 28.16 28.16 0 0 1 477.44 417.28" fill="none" stroke="#ffd23f" stroke-width="3.52"/>
     <rect x="312" y="292" width="176" height="216" rx="44" fill="url(#glare)"/>
         <rect x="508" y="350" width="14" height="50" rx="6" fill="#4b515f"/></g></svg>

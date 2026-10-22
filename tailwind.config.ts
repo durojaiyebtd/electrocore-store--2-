@@ -6,22 +6,22 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: '#effcf9',
-          100: '#d3f8ef',
-          200: '#a8efe0',
-          300: '#72e0cd',
-          400: '#3cc8b4',
-          500: '#1aab9b',
-          600: '#0d7a72',
-          700: '#0b625c',
-          800: '#0c4e4a',
-          900: '#0d403d',
-          950: '#052b2a',
+          50: '#fff1f7',
+          100: '#ffe0ee',
+          200: '#ffc2dc',
+          300: '#ff93c1',
+          400: '#f95ea0',
+          500: '#ec3a85',
+          600: '#d42073',
+          700: '#b0165f',
+          800: '#8f144f',
+          900: '#701243',
+          950: '#480a2b',
         },
-        // Accent: warm amber ("volt" keeps its old name so no component needs renaming)
+        // Accent: sunny yellow ("volt" keeps its old name so no component needs renaming)
         volt: {
-          400: '#f5b942',
-          500: '#e89a1b',
+          400: '#ffd23f',
+          500: '#ffbe0b',
         },
       },
       fontFamily: {
@@ -30,7 +30,7 @@ const config: Config = {
       },
       boxShadow: {
         card: '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 16px -4px rgba(15, 23, 42, 0.08)',
-        lift: '0 8px 30px -8px rgba(13, 122, 114, 0.35)',
+        lift: '0 8px 30px -8px rgba(212, 32, 115, 0.35)',
       },
       keyframes: {
         'slide-in-right': { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },

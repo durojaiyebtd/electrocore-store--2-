@@ -29,13 +29,13 @@
         <rect x="190" y="190" width="420" height="285" rx="16" fill="#3f4654" stroke="#5c626e" stroke-width="3"/>
         
     <rect x="207" y="207" width="386" height="250" rx="6" fill="url(#screen)"/>
-    <rect x="245.6" y="237" width="108.08000000000001" height="20" rx="4" fill="#f5b942" opacity="0.85"/>
+    <rect x="245.6" y="237" width="108.08000000000001" height="20" rx="4" fill="#ffd23f" opacity="0.85"/>
     <rect x="245.6" y="282" width="212.3" height="11.25" rx="3" fill="#ffffff" opacity="0.18"/><rect x="245.6" y="314.5" width="146.68" height="11.25" rx="3" fill="#ffffff" opacity="0.15"/><rect x="245.6" y="347" width="212.3" height="11.25" rx="3" fill="#ffffff" opacity="0.12"/><rect x="245.6" y="379.5" width="146.68" height="11.25" rx="3" fill="#ffffff" opacity="0.09"/>
-    <circle cx="508.08" cy="352" r="40" fill="none" stroke="#0d7a72" stroke-width="7.72" opacity="0.9"/>
-    <path d="M508.08 312 A 40 40 0 0 1 548.0799999999999 352" fill="none" stroke="#f5b942" stroke-width="7.72"/>
+    <circle cx="508.08" cy="352" r="40" fill="none" stroke="#d42073" stroke-width="7.72" opacity="0.9"/>
+    <path d="M508.08 312 A 40 40 0 0 1 548.0799999999999 352" fill="none" stroke="#ffd23f" stroke-width="7.72"/>
     <rect x="207" y="207" width="386" height="250" rx="6" fill="url(#glare)"/>
         <path d="M140 482 H660 L700 524 Q702 534 690 534 H110 Q98 534 100 524 Z" fill="#6f747f" stroke="#5c626e" stroke-width="3"/>
         <rect x="355" y="482" width="90" height="10" rx="5" fill="#292e37"/></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

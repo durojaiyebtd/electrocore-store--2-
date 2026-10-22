@@ -33,8 +33,8 @@
             <rect x="-22" y="-150" width="44" height="230" rx="18" fill="#334155"/>
             <path d="M-60 -170 a60 60 0 1 0 120 0 l-30 0 l0 36 l-60 0 l0 -36 z" fill="#334155"/>
           </g>
-          <circle r="20" fill="#f5b942"/>
+          <circle r="20" fill="#ffd23f"/>
         </g></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>

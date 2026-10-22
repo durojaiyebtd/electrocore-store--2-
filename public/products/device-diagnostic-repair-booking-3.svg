@@ -27,14 +27,14 @@
     </pattern>
   </defs><rect width="800" height="800" fill="url(#bgBlue)"/><g transform="translate(400 400) scale(1.55) translate(-400 -400) translate(40 30)">
         <g transform="translate(400 400)">
-          <circle r="150" fill="none" stroke="#0d7a72" stroke-width="40" stroke-dasharray="52 26"/>
-          <circle r="95" fill="#dbebea" stroke="#0d7a72" stroke-width="10"/>
+          <circle r="150" fill="none" stroke="#d42073" stroke-width="40" stroke-dasharray="52 26"/>
+          <circle r="95" fill="#f9deea" stroke="#d42073" stroke-width="10"/>
           <g transform="rotate(-45)">
             <rect x="-22" y="-150" width="44" height="230" rx="18" fill="#334155"/>
             <path d="M-60 -170 a60 60 0 1 0 120 0 l-30 0 l0 36 l-60 0 l0 -36 z" fill="#334155"/>
           </g>
-          <circle r="20" fill="#f5b942"/>
+          <circle r="20" fill="#ffd23f"/>
         </g></g>
       <rect x="40" y="704" width="250" height="52" rx="26" fill="#ffffff" opacity="0.92"/>
-      <circle cx="72" cy="730" r="10" fill="#0d7a72"/>
+      <circle cx="72" cy="730" r="10" fill="#d42073"/>
       <text x="92" y="737" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Quality inspected</text></svg>
