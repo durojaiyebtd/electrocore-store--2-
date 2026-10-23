@@ -11,11 +11,12 @@ import { Spinner } from '@/components/ui/Spinner';
 import { formatMoney } from '@/lib/currency';
 import { freeShippingThreshold } from '@/lib/shipping';
 import { pluralize } from '@/lib/utils';
+import { ProductImage } from '@/components/product/ProductImage';
 import { CartLineItem } from './CartLineItem';
 import { useCart } from './CartProvider';
 
 export function CartDrawer() {
-  const { cart, loading, isDrawerOpen, closeDrawer, error, clearError } = useCart();
+  const { cart, loading, isDrawerOpen, closeDrawer, error, clearError, justAddedItemId } = useCart();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export function CartDrawer() {
   const remaining = Math.max(0, threshold - cart.subtotal);
   const progress = threshold > 0 ? Math.min(100, Math.round((cart.subtotal / threshold) * 100)) : 100;
   const hasUnavailable = cart.items.some((item) => !item.available);
+  const justAdded = justAddedItemId ? cart.items.find((item) => item.id === justAddedItemId) ?? null : null;
 
   return (
     <div className="fixed inset-0 z-[70]" role="presentation">
@@ -64,6 +66,32 @@ export function CartDrawer() {
             <CloseIcon />
           </button>
         </header>
+
+        {justAdded ? (
+          <section aria-label="Item added to cart" role="status" className="border-b border-emerald-200 bg-emerald-50 px-5 py-4">
+            <p className="text-sm font-semibold text-emerald-800">✓ Added to your cart</p>
+            <div className="mt-3 flex gap-3">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-emerald-200 bg-white">
+                <ProductImage src={justAdded.image} alt="" fallbackLabel={justAdded.productName} className="h-full w-full object-contain" />
+              </div>
+              <div className="min-w-0 flex-1 text-sm">
+                <p className="line-clamp-2 font-medium text-slate-900">{justAdded.productName}</p>
+                {justAdded.variantName && justAdded.variantName !== 'Standard' ? <p className="text-slate-600">{justAdded.variantName}</p> : null}
+                <p className="mt-0.5 tabular-nums text-slate-700">
+                  Qty {justAdded.quantity} · {formatMoney(justAdded.unitPrice)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={closeDrawer} className="h-10 rounded-lg border border-emerald-300 bg-white text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
+                Continue shopping
+              </button>
+              <Link href="/checkout" onClick={closeDrawer} className="grid h-10 place-items-center rounded-lg bg-brand-600 text-sm font-semibold text-white hover:bg-brand-700">
+                Proceed to checkout
+              </Link>
+            </div>
+          </section>
+        ) : null}
 
         {cart.hasPhysicalItems ? (
           <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">

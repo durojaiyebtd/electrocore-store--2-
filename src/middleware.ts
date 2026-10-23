@@ -1,6 +1,7 @@
 /**
  * First line of defence for the admin portal: anyone without an admin session
- * is sent to /admin/login before any admin page renders. Every admin API and
+ * is blocked before any admin page renders: signed-in customers go to the home page,
+ * everyone else to /login, both with an "Unauthorized Access" alert. Every admin API and
  * page also re-checks the role against the database (src/lib/admin-auth.ts).
  */
 import { NextResponse, type NextRequest } from 'next/server';
@@ -9,7 +10,7 @@ import { SESSION_COOKIE, verifySessionToken } from './lib/session-token';
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  // The login page itself must stay reachable
+  // The sign-in pages themselves must stay reachable
   if (pathname === '/admin/login') {
     return NextResponse.next();
   }
@@ -33,8 +34,16 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!isAdmin) {
-    const loginUrl = new URL('/admin/login', request.url);
+    // Signed-in customers are sent home; visitors who are not signed in are sent to the sign-in
+    // page. Both get ?error=unauthorized, which shows the "Unauthorized Access" alert.
+    if (session) {
+      const homeUrl = new URL('/', request.url);
+      homeUrl.searchParams.set('error', 'unauthorized');
+      return NextResponse.redirect(homeUrl);
+    }
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('next', `${pathname}${search}`);
+    loginUrl.searchParams.set('error', 'unauthorized');
     return NextResponse.redirect(loginUrl);
   }
 

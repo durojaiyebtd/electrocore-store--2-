@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { ok, parseBody } from '@/lib/http';
-import { loginSchema, registerSchema } from '@/lib/validators';
+import { clearGuestEmail, setGuestEmail } from '@/lib/guest-checkout';
+import { guestSchema, loginSchema, registerSchema } from '@/lib/validators';
 import * as authService from '../services/auth.service';
 import { clearCartCookie } from '../services/cart.service';
 
@@ -16,10 +17,18 @@ export async function login(req: NextRequest) {
   return ok({ user: await authService.login(input) });
 }
 
+/** POST /api/auth/guest — remembers a guest's email so they can pass the checkout sign-in gateway */
+export async function guest(req: NextRequest) {
+  const { email } = await parseBody(req, guestSchema);
+  await setGuestEmail(email);
+  return ok({ email });
+}
+
 /** POST /api/auth/logout */
 export async function logout() {
   await authService.logout();
   await clearCartCookie();
+  await clearGuestEmail();
   return ok({ loggedOut: true });
 }
 

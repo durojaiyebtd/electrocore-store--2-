@@ -110,7 +110,7 @@ function splitList(value?: string): string[] {
 }
 
 const SORTS: Record<ProductQuery['sort'], Prisma.ProductOrderByWithRelationInput[]> = {
-  featured: [{ featured: 'desc' }, { rating: 'desc' }, { createdAt: 'desc' }],
+  featured: [{ homeRank: 'desc' }, { featured: 'desc' }, { rating: 'desc' }, { createdAt: 'desc' }],
   newest: [{ createdAt: 'desc' }],
   price_asc: [{ price: 'asc' }],
   price_desc: [{ price: 'desc' }],
@@ -206,14 +206,54 @@ export async function getRelatedProducts(productId: string, categorySlug: string
   return [...products, ...extra].map(toSummary);
 }
 
+/**
+ * Products that should NOT lead the homepage. Monitors and HP laptops stay in the
+ * shop and in their categories; they only appear in "Top picks" after everything
+ * else, unless an admin gives them a Homepage priority.
+ */
+export function isDeferredForHome(product: { brand: string; category: { name: string; slug: string } }): boolean {
+  const category = `${product.category.name} ${product.category.slug}`.toLowerCase();
+  if (/monitor|display/.test(category)) return true;
+  return /laptop/.test(category) && /^hp\b/i.test(product.brand.trim());
+}
+
+/**
+ * Orders products for the homepage "Top picks" row:
+ * 1. products an admin pinned with a Homepage priority (highest number first),
+ * 2. then a mix with one product per category in turn, so the row is varied,
+ * 3. then deferred products (monitors, HP laptops) last.
+ * Pure function so it can be tested without a database.
+ */
+export function arrangeForHome<T extends { id: string; homeRank: number; featured: boolean; rating: number; brand: string; category: { name: string; slug: string } }>(products: T[], limit: number): T[] {
+  const pinned = products.filter((p) => p.homeRank > 0).sort((a, b) => b.homeRank - a.homeRank);
+  const rest = products
+    .filter((p) => p.homeRank <= 0)
+    .sort((a, b) => Number(b.featured) - Number(a.featured) || b.rating - a.rating);
+  const normal = rest.filter((p) => !isDeferredForHome(p));
+  const deferred = rest.filter((p) => isDeferredForHome(p));
+
+  const byCategory = new Map<string, T[]>();
+  for (const product of normal) {
+    const list = byCategory.get(product.category.slug) ?? [];
+    list.push(product);
+    byCategory.set(product.category.slug, list);
+  }
+  const mixed: T[] = [];
+  const queues = Array.from(byCategory.values());
+  for (let round = 0; queues.some((queue) => queue.length > round); round += 1) {
+    for (const queue of queues) if (queue[round]) mixed.push(queue[round]);
+  }
+  return [...pinned, ...mixed, ...deferred].slice(0, limit);
+}
+
 export async function getFeaturedProducts(limit = 8): Promise<ProductSummaryDTO[]> {
   const products = await prisma.product.findMany({
-    where: { isActive: true, featured: true },
+    where: { isActive: true, totalStock: { gt: 0 } },
     include: summaryInclude,
-    orderBy: [{ rating: 'desc' }, { reviewCount: 'desc' }],
-    take: limit,
+    orderBy: [{ featured: 'desc' }, { rating: 'desc' }, { createdAt: 'desc' }],
+    take: 300,
   });
-  return products.map(toSummary);
+  return arrangeForHome(products, limit).map(toSummary);
 }
 
 export async function listCategories(): Promise<CategoryDTO[]> {

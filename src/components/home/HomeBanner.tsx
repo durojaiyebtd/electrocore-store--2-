@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
-export function HomeBanner() {
+export function HomeBanner({ image }: { image?: string }) {
   const [hidden, setHidden] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
 
@@ -23,7 +23,7 @@ export function HomeBanner() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={ref}
-        src="/images/site/banner.jpg"
+        src={image || '/images/site/banner.jpg'}
         alt="Quality products for a smarter tomorrow: laptops and computers, phones and accessories, power and electricity, networking and security, software and licences"
         className="w-full rounded-2xl object-cover shadow-card"
         width={1824}

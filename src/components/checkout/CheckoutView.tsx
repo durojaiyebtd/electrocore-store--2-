@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState, type FormEvent, type InputHTMLAttributes 
 import { useCart } from '@/components/cart/CartProvider';
 import { AlertIcon, LockIcon } from '@/components/ui/Icons';
 import { Spinner } from '@/components/ui/Spinner';
-import { apiFetch } from '@/lib/api-client';
+import { ClientApiError, apiFetch } from '@/lib/api-client';
 import { CURRENCIES, formatMoney, getStoreCurrency } from '@/lib/currency';
 import { NIGERIAN_STATES, quoteShipping } from '@/lib/shipping';
 import { cn } from '@/lib/utils';
@@ -59,9 +59,9 @@ function validate(form: FormState): Errors {
 
 const STEPS = ['Cart', 'Details', 'Payment', 'Confirmation'];
 
-export function CheckoutView() {
+export function CheckoutView({ guestEmail = null }: { guestEmail?: string | null }) {
   const { cart, loading } = useCart();
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>({ ...EMPTY_FORM, email: guestEmail ?? '' });
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -116,6 +116,11 @@ export function CheckoutView() {
       });
       window.location.assign(result.authorizationUrl);
     } catch (err) {
+      if (err instanceof ClientApiError && err.code === 'CHECKOUT_AUTH_REQUIRED') {
+        // The guest/sign-in session expired while the form was open
+        window.location.assign('/checkout/auth?next=/checkout');
+        return;
+      }
       setServerError(err instanceof Error ? err.message : 'Could not start payment. Please try again.');
       setSubmitting(false);
     }
@@ -191,6 +196,14 @@ export function CheckoutView() {
         <div className="space-y-10">
           <fieldset className="space-y-4">
             <legend className="text-lg font-semibold text-slate-900">Contact</legend>
+            {guestEmail ? (
+              <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-900">
+                Checking out as a guest.{' '}
+                <Link href="/checkout/auth?next=/checkout" className="font-semibold underline">
+                  Sign in or create an account instead
+                </Link>
+              </p>
+            ) : null}
             {field('email', 'Email address', { type: 'email', autoComplete: 'email', inputMode: 'email' })}
             <p className="-mt-2 text-sm text-slate-500">Your receipt and order updates go here.</p>
             {field('phone', 'Phone number', { type: 'tel', autoComplete: 'tel', inputMode: 'tel', placeholder: '0803 123 4567' })}

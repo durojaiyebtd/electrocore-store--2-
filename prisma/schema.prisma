@@ -165,6 +165,8 @@ model Product {
   rating           Float            @default(0)
   reviewCount      Int              @default(0)
   featured         Boolean          @default(false)
+  /// Homepage boost set by admins: 0 = automatic order, higher numbers appear earlier
+  homeRank         Int              @default(0)
   isActive         Boolean          @default(true)
 
   // ---- Reseller / supplier abstraction ----
@@ -294,6 +296,10 @@ model Order {
   reviewReason    String?
   /// Set when stock from this order was put back (cancel/refund) so it never happens twice
   restockedAt     DateTime?
+  /// Dispatch details, entered when an admin ships the order
+  courier         String?
+  trackingNumber  String?
+  shippedAt       DateTime?
   /// Status timeline: who changed what and when
   events          OrderEvent[]
   items           OrderItem[]
@@ -373,4 +379,27 @@ model WebhookEvent {
 
   @@index([reference])
   @@map("webhook_events")
+}
+
+/// A photo uploaded from the admin portal. Stored in the database so it works on any host
+/// (Vercel has no permanent disk). Served publicly at /api/images/:id.
+model UploadedImage {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  mimeType   String
+  size       Int
+  data       Bytes
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  @@map("uploaded_images")
+}
+
+/// Small key/value store for storefront content that admins can edit (announcement bar, hero text, ...)
+model SiteSetting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }

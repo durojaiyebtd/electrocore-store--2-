@@ -15,6 +15,7 @@ import type { Fulfillment } from '@/types';
 import type { AdminCategoryDTO, AdminProductDetailDTO } from '@/types/admin';
 import { StockAdjuster } from './StockAdjuster';
 import { ErrorBanner, LoadingBlock, Panel, Pill, adminButton, adminInput, formatDateTime, useAdminQuery } from './ui';
+import { PhotoUpload } from './PhotoUpload';
 import { ProductImage } from '@/components/product/ProductImage';
 
 interface VariantRow {
@@ -42,6 +43,7 @@ interface FormState {
   fulfillment: Fulfillment;
   warrantyMonths: string;
   featured: boolean;
+  homeRank: string;
   isActive: boolean;
   optionNames: string[];
   variants: VariantRow[];
@@ -85,6 +87,7 @@ function fromProduct(product: AdminProductDetailDTO): FormState {
     fulfillment: product.fulfillment,
     warrantyMonths: String(product.warrantyMonths),
     featured: product.featured,
+    homeRank: String(product.homeRank),
     isActive: product.isActive,
     optionNames,
     variants,
@@ -107,6 +110,7 @@ function blankForm(): FormState {
     fulfillment: 'PHYSICAL',
     warrantyMonths: '12',
     featured: false,
+    homeRank: '0',
     isActive: true,
     optionNames: [],
     variants: [first],
@@ -228,6 +232,7 @@ export function ProductForm({ product, initialMessage = null }: { product?: Admi
       fulfillment: form.fulfillment,
       warrantyMonths: Number(form.warrantyMonths || 0),
       featured: form.featured,
+      homeRank: Number(form.homeRank || 0),
       isActive: form.isActive,
       variants: form.variants.map((v) => {
         const options = optionNames.map((name, i) => ({ name, value: v.values[i]?.trim() ?? '' })).filter((o) => o.value);
@@ -502,6 +507,11 @@ export function ProductForm({ product, initialMessage = null }: { product?: Admi
                 </span>
                 <input type="checkbox" checked={form.featured} onChange={(e) => set('featured', e.target.checked)} className="h-5 w-5 accent-brand-600" />
               </label>
+              <div>
+                <label htmlFor="p-homerank" className="font-medium text-slate-900">Homepage priority</label>
+                <p className="text-xs text-slate-500">0 = automatic. A higher number shows this product earlier in “Top picks” (for example 100 first, 90 second).</p>
+                <input id="p-homerank" type="number" min={0} max={1000} step={1} value={form.homeRank} onChange={(e) => set('homeRank', e.target.value)} className={`${adminInput} mt-2 max-w-[8rem]`} />
+              </div>
             </div>
           </Panel>
 
@@ -539,6 +549,7 @@ export function ProductForm({ product, initialMessage = null }: { product?: Admi
               ) : (
                 <p className="text-sm text-slate-500">No images yet. The store shows a neutral placeholder until you add one.</p>
               )}
+              <PhotoUpload onUploaded={(url) => set('images', [...form.images, url])} label="Upload photo from your computer" />
               <div className="flex gap-2">
                 <label htmlFor="p-image" className="sr-only">Image URL</label>
                 <input

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useCart } from '@/components/cart/CartProvider';
 import { AlertIcon } from '@/components/ui/Icons';
 import { Spinner } from '@/components/ui/Spinner';
@@ -23,20 +24,7 @@ const STATUS_STYLE: Record<OrderStatus, { label: string; className: string }> = 
 };
 
 export function AccountView() {
-  const [user, setUser] = useState<SessionUserDTO | null | undefined>(undefined);
-
-  const loadUser = useCallback(async () => {
-    try {
-      const { user: current } = await apiFetch<{ user: SessionUserDTO | null }>('/api/auth/me');
-      setUser(current);
-    } catch {
-      setUser(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadUser();
-  }, [loadUser]);
+  const { user, setUser } = useAuth();
 
   if (user === undefined) {
     return (

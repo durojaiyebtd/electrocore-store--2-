@@ -139,8 +139,13 @@ export async function Footer() {
           <p>
             © {year} {site.legalName} (RC No: {site.rcNumber}). All rights reserved.
           </p>
-          <p>
-            Prices shown in {CURRENCIES[getStoreCurrency()].name} ({CURRENCIES[getStoreCurrency()].symbol}).
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>
+              Prices shown in {CURRENCIES[getStoreCurrency()].name} ({CURRENCIES[getStoreCurrency()].symbol}).
+            </span>
+            <Link href="/admin/login" className="font-medium text-brand-700 hover:underline">
+              Staff login
+            </Link>
           </p>
         </div>
       </div>

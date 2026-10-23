@@ -7,15 +7,24 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useCart } from '@/components/cart/CartProvider';
 import { CartIcon, CloseIcon, MenuIcon, SearchIcon, UserIcon } from '@/components/ui/Icons';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+const BASE_NAV: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/shop', label: 'Shop' },
-] as const;
+];
+
+/** Admin-only link, shown right after Home and Shop (and only to ADMIN users). */
+const ADMIN_NAV_ITEM: NavItem = { href: '/admin', label: 'Admin Portal' };
 
 function isActive(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname.startsWith(href) || (href === '/shop' && pathname.startsWith('/product'));
@@ -83,7 +92,11 @@ function CartButton() {
 
 export function Header() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAdmin = user?.role === 'ADMIN';
+  const nav: NavItem[] = isAdmin ? [...BASE_NAV, ADMIN_NAV_ITEM] : BASE_NAV;
+  const accountLabel = user ? 'Account' : 'Sign in';
 
   useEffect(() => {
     setMenuOpen(false);
@@ -121,7 +134,7 @@ export function Header() {
 
         <nav aria-label="Main" className="hidden lg:block">
           <ul className="flex items-center gap-1">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
@@ -161,8 +174,8 @@ export function Header() {
             )}
           >
             <UserIcon size={20} />
-            <span className="hidden xl:inline">Account</span>
-            <span className="sr-only xl:hidden">Account</span>
+            <span className="hidden xl:inline">{accountLabel}</span>
+            <span className="sr-only xl:hidden">{accountLabel}</span>
           </Link>
           <CartButton />
         </div>
@@ -170,7 +183,7 @@ export function Header() {
 
       {menuOpen ? (
         <div className="fixed inset-0 z-[80] lg:hidden" role="presentation">
-          <div className="absolute inset-0 animate-fade-in bg-slate-950/50" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-0 animate-fade-in bg-slate-900/40" onClick={() => setMenuOpen(false)} aria-hidden="true" />
           <div
             id="mobile-menu"
             role="dialog"
@@ -196,7 +209,7 @@ export function Header() {
             </div>
             <nav aria-label="Mobile" className="px-2">
               <ul className="flex flex-col">
-                {[...NAV, { href: '/account', label: 'Account' } as const].map((item) => (
+                {[...nav, { href: '/account', label: accountLabel }].map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}

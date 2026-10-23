@@ -3,7 +3,7 @@
  * re-checks the signed-in user's role in the database.
  */
 import { timingSafeEqual } from 'crypto';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { ApiError, ok, parseBody, parseQuery, type RouteContext } from '@/lib/http';
 import { requireAdmin } from '@/lib/admin-auth';
 import {
@@ -15,8 +15,12 @@ import {
   productInputSchema,
   productListQuerySchema,
   refundOrderSchema,
+  reportExportQuerySchema,
+  reportQuerySchema,
+  trackingSchema,
   resolveReviewSchema,
   stockAdjustmentSchema,
+  transactionListQuerySchema,
   updateOrderStatusSchema,
 } from '@/lib/admin-validators';
 import { getSupplier } from '@/lib/suppliers';
@@ -24,8 +28,14 @@ import { z } from 'zod';
 import { syncFromSupplier } from '../services/sync.service';
 import { adjustStock } from '../services/inventory.service';
 import { getDashboard, getLowStock } from '../services/admin/dashboard.service';
-import { getOrderDetail, listOrders, refundOrder, resolveReview, updateOrderStatus } from '../services/admin/admin-order.service';
-import { createProduct, getProduct, listProducts, setProductActive, updateProduct } from '../services/admin/admin-product.service';
+import { getOrderDetail, listOrders, refundOrder, resolveReview, setTracking, updateOrderStatus } from '../services/admin/admin-order.service';
+import { listTransactions } from '../services/admin/admin-transaction.service';
+import { createProduct, deleteProduct, getProduct, listProducts, setProductActive, updateProduct } from '../services/admin/admin-product.service';
+import { siteContentSchema } from '@/lib/site-content';
+import { getSiteContent, saveSiteContent } from '../services/content.service';
+import { listNotifications } from '../services/admin/notification.service';
+import { saveImage } from '../services/admin/image.service';
+import { buildReport, exportCsv, resolveRange } from '../services/admin/report.service';
 import {
   createCategory,
   deleteCategory,
@@ -68,6 +78,14 @@ export async function orderUpdateStatus(req: NextRequest, ctx: RouteContext<{ or
   return ok(await updateOrderStatus(orderNumber, input, admin));
 }
 
+/** POST /api/admin/orders/:orderNumber/tracking  { courier, trackingNumber } */
+export async function orderTracking(req: NextRequest, ctx: RouteContext<{ orderNumber: string }>) {
+  const admin = await requireAdmin();
+  const { orderNumber } = await ctx.params;
+  const input = await parseBody(req, trackingSchema);
+  return ok(await setTracking(orderNumber, input, admin));
+}
+
 /** POST /api/admin/orders/:orderNumber/refund  { method, note?, restock } */
 export async function orderRefund(req: NextRequest, ctx: RouteContext<{ orderNumber: string }>) {
   const admin = await requireAdmin();
@@ -82,6 +100,14 @@ export async function orderResolveReview(req: NextRequest, ctx: RouteContext<{ o
   const { orderNumber } = await ctx.params;
   const { note } = await parseBody(req, resolveReviewSchema);
   return ok(await resolveReview(orderNumber, note, admin));
+}
+
+// ------------------------------------------------------------- Transactions
+
+/** GET /api/admin/transactions?status=&q=&page= */
+export async function transactions(req: NextRequest) {
+  await requireAdmin();
+  return ok(await listTransactions(parseQuery(req, transactionListQuerySchema)));
 }
 
 // ----------------------------------------------------------------- Products
@@ -112,6 +138,13 @@ export async function productUpdate(req: NextRequest, ctx: RouteContext<{ id: st
   const { id } = await ctx.params;
   const input = await parseBody(req, productInputSchema);
   return ok(await updateProduct(id, input, admin));
+}
+
+/** DELETE /api/admin/products/:id */
+export async function productDelete(_req: NextRequest, ctx: RouteContext<{ id: string }>) {
+  const admin = await requireAdmin();
+  const { id } = await ctx.params;
+  return ok(await deleteProduct(id, admin));
 }
 
 /** PATCH /api/admin/products/:id  { isActive } — publish / unpublish */
@@ -229,4 +262,67 @@ export async function syncSupplier(req: NextRequest) {
     throw new ApiError(400, error instanceof Error ? error.message : 'Unknown supplier', 'UNKNOWN_SUPPLIER');
   }
   return ok(await syncFromSupplier(adapter));
+}
+
+// ------------------------------------------------------------------- Reports
+
+/** GET /api/admin/reports?from=YYYY-MM-DD&to=YYYY-MM-DD */
+export async function report(req: NextRequest) {
+  await requireAdmin();
+  const { from, to } = parseQuery(req, reportQuerySchema);
+  return ok(await buildReport(resolveRange(from, to)));
+}
+
+/** GET /api/admin/reports/export?type=orders|transactions|customers|inventory&from=&to= — downloads a CSV file */
+export async function reportExport(req: NextRequest) {
+  await requireAdmin();
+  const { type, from, to } = parseQuery(req, reportExportQuerySchema);
+  const { filename, body } = await exportCsv(type, resolveRange(from, to));
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+// ------------------------------------------------------------------- Uploads
+
+/** POST /api/admin/uploads  (multipart form, field "file") — returns { url } for use as a product image */
+export async function uploadImage(req: NextRequest) {
+  const admin = await requireAdmin();
+  let form: FormData;
+  try {
+    form = await req.formData();
+  } catch {
+    throw new ApiError(400, 'Send the photo as a form upload.', 'BAD_UPLOAD');
+  }
+  const file = form.get('file');
+  if (!(file instanceof File)) throw new ApiError(400, 'Choose a photo to upload.', 'NO_FILE');
+  return ok(await saveImage(file, admin), { status: 201 });
+}
+
+// ------------------------------------------------------------ Website content
+
+/** GET /api/admin/content */
+export async function contentGet() {
+  await requireAdmin();
+  return ok(await getSiteContent());
+}
+
+/** PUT /api/admin/content — saves homepage text, the announcement bar and the banner picture */
+export async function contentSave(req: NextRequest) {
+  await requireAdmin();
+  const input = await parseBody(req, siteContentSchema);
+  return ok(await saveSiteContent(input));
+}
+
+// ------------------------------------------------------------- Notifications
+
+/** GET /api/admin/notifications */
+export async function notifications() {
+  await requireAdmin();
+  return ok(await listNotifications());
 }

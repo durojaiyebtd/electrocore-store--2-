@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { LogoMark } from '@/components/layout/Logo';
-import { CartIcon, ChipIcon, CloseIcon, KeyboardIcon, MenuIcon, UserIcon, BoltIcon, WrenchIcon } from '@/components/ui/Icons';
+import { CartIcon, ChipIcon, CloseIcon, KeyboardIcon, LockIcon, MenuIcon, UserIcon, BoltIcon, WrenchIcon } from '@/components/ui/Icons';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
@@ -16,9 +16,13 @@ const NAV = [
   { href: '/admin', label: 'Dashboard', icon: BoltIcon, exact: true },
   { href: '/admin/orders', label: 'Orders', icon: CartIcon },
   { href: '/admin/products', label: 'Products', icon: KeyboardIcon },
+  { href: '/admin/transactions', label: 'Transactions', icon: LockIcon },
   { href: '/admin/inventory', label: 'Inventory', icon: ChipIcon },
+  { href: '/admin/reports', label: 'Reports', icon: BoltIcon },
   { href: '/admin/customers', label: 'Customers', icon: UserIcon },
   { href: '/admin/categories', label: 'Categories', icon: MenuIcon },
+  { href: '/admin/content', label: 'Website content', icon: MenuIcon },
+  { href: '/admin/notifications', label: 'Notifications', icon: BoltIcon },
   { href: '/admin/settings', label: 'Settings', icon: WrenchIcon },
 ] as const;
 
@@ -67,13 +71,13 @@ export function AdminShell({ admin, children }: AdminShellProps) {
     try {
       await apiFetch('/api/auth/logout', { method: 'POST' });
     } finally {
-      router.push('/admin/login');
+      router.push('/login');
       router.refresh();
     }
   }
 
   const footer = (
-    <div className="border-t border-white/10 p-3">
+    <div className="border-t border-brand-100 p-3">
       <div className="flex items-center gap-3 px-2 py-2">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">
           {admin.firstName.charAt(0)}
@@ -114,7 +118,7 @@ export function AdminShell({ admin, children }: AdminShellProps) {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-brand-100 bg-white lg:flex">
+      <aside className="sticky top-0 hidden print:!hidden h-screen w-60 shrink-0 flex-col border-r border-brand-100 bg-white lg:flex">
         <div className="flex h-16 items-center px-3">{brand}</div>
         <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-2">
           <NavLinks pathname={pathname} />
@@ -123,7 +127,7 @@ export function AdminShell({ admin, children }: AdminShellProps) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-brand-100 bg-white px-4 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 print:hidden items-center gap-3 border-b border-brand-100 bg-white px-4 lg:hidden">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}

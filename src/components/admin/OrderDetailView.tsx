@@ -19,7 +19,7 @@ const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   CANCELLED: 'Cancel order',
 };
 
-type Dialog = { kind: 'status'; status: OrderStatus } | { kind: 'refund' } | { kind: 'review' } | null;
+type Dialog = { kind: 'status'; status: OrderStatus } | { kind: 'refund' } | { kind: 'review' } | { kind: 'tracking' } | null;
 
 export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const { data: order, setData, error, loading, reload } = useAdminQuery<AdminOrderDetailDTO>(`/api/admin/orders/${encodeURIComponent(orderNumber)}`);
@@ -27,6 +27,8 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const [note, setNote] = useState('');
   const [restock, setRestock] = useState(true);
   const [method, setMethod] = useState<'paystack' | 'manual'>('paystack');
+  const [courier, setCourier] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
@@ -36,6 +38,8 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
     setNote('');
     setRestock(true);
     setMethod('paystack');
+    setCourier(order?.courier ?? '');
+    setTrackingNumber(order?.trackingNumber ?? '');
     setActionError(null);
     setFlash(null);
   }
@@ -49,9 +53,15 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
       if (dialog.kind === 'status') {
         updated = await apiFetch<AdminOrderDetailDTO>(`/api/admin/orders/${encodeURIComponent(orderNumber)}`, {
           method: 'PATCH',
-          body: { status: dialog.status, note: note || undefined, restock },
+          body: { status: dialog.status, note: note || undefined, restock, courier: courier || undefined, trackingNumber: trackingNumber || undefined },
         });
         setFlash(`Order marked as ${orderStatusLabel(dialog.status).toLowerCase()}.`);
+      } else if (dialog.kind === 'tracking') {
+        updated = await apiFetch<AdminOrderDetailDTO>(`/api/admin/orders/${encodeURIComponent(orderNumber)}/tracking`, {
+          method: 'POST',
+          body: { courier, trackingNumber },
+        });
+        setFlash('Tracking details saved.');
       } else if (dialog.kind === 'refund') {
         updated = await apiFetch<AdminOrderDetailDTO>(`/api/admin/orders/${encodeURIComponent(orderNumber)}/refund`, {
           method: 'POST',
@@ -126,18 +136,42 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
             Refund
           </button>
         ) : null}
+        {['PAID', 'PROCESSING', 'SHIPPED'].includes(order.status) ? (
+          <button type="button" onClick={() => open({ kind: 'tracking' })} className={adminButton.secondary}>
+            {order.trackingNumber ? 'Edit tracking' : 'Add tracking'}
+          </button>
+        ) : null}
+        <button type="button" onClick={() => window.print()} className={adminButton.secondary}>
+          Print
+        </button>
         <Link href={`mailto:${order.email}?subject=${encodeURIComponent(`Your order ${order.orderNumber}`)}`} className={adminButton.secondary}>
           Email customer
         </Link>
       </div>
 
       {dialog ? (
-        <Panel title={dialog.kind === 'refund' ? 'Refund this order' : dialog.kind === 'review' ? 'Resolve review' : ACTION_LABEL[dialog.status] ?? 'Update status'}>
+        <Panel title={dialog.kind === 'refund' ? 'Refund this order' : dialog.kind === 'review' ? 'Resolve review' : dialog.kind === 'tracking' ? 'Courier and tracking' : ACTION_LABEL[dialog.status] ?? 'Update status'}>
           <div className="flex flex-col gap-4 p-5">
             {dialog.kind === 'status' && dialog.status === 'CANCELLED' && wasPaid ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
                 This order was paid {formatMoney(order.total)}. Cancelling does not return money — use Refund afterwards if the customer is owed.
               </p>
+            ) : null}
+            {dialog.kind === 'tracking' || (dialog.kind === 'status' && dialog.status === 'SHIPPED') ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="courier" className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Courier {dialog.kind === 'status' ? <span className="font-normal text-slate-400">(optional)</span> : null}
+                  </label>
+                  <input id="courier" value={courier} onChange={(e) => setCourier(e.target.value)} maxLength={60} placeholder="e.g. GIG Logistics" required={dialog.kind === 'tracking'} className={adminInput} />
+                </div>
+                <div>
+                  <label htmlFor="tracking-number" className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Tracking number {dialog.kind === 'status' ? <span className="font-normal text-slate-400">(optional)</span> : null}
+                  </label>
+                  <input id="tracking-number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} maxLength={80} placeholder="e.g. GIG123456789" required={dialog.kind === 'tracking'} className={adminInput} />
+                </div>
+              </div>
             ) : null}
             {dialog.kind === 'refund' ? (
               <fieldset className="flex flex-col gap-2">
@@ -167,7 +201,7 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
             <div>
               <label htmlFor="action-note" className="mb-1.5 block text-sm font-medium text-slate-700">
                 {dialog.kind === 'review' ? 'How was it resolved?' : 'Note for the timeline'}{' '}
-                {dialog.kind !== 'review' ? <span className="font-normal text-slate-400">(optional)</span> : null}
+                {dialog.kind !== 'review' && dialog.kind !== 'tracking' ? <span className="font-normal text-slate-400">(optional)</span> : null}
               </label>
               <textarea
                 id="action-note"
@@ -184,11 +218,11 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
               <button
                 type="button"
                 onClick={submit}
-                disabled={busy || (dialog.kind === 'review' && note.trim().length < 3)}
+                disabled={busy || (dialog.kind === 'review' && note.trim().length < 3) || (dialog.kind === 'tracking' && (courier.trim().length < 2 || trackingNumber.trim().length < 3))}
                 className={dialog.kind === 'status' && dialog.status === 'CANCELLED' ? adminButton.danger : adminButton.primary}
               >
                 {busy ? <Spinner /> : null}
-                {dialog.kind === 'refund' ? (method === 'paystack' ? `Refund ${formatMoney(order.total)}` : 'Record refund') : dialog.kind === 'review' ? 'Mark resolved' : 'Confirm'}
+                {dialog.kind === 'refund' ? (method === 'paystack' ? `Refund ${formatMoney(order.total)}` : 'Record refund') : dialog.kind === 'review' ? 'Mark resolved' : dialog.kind === 'tracking' ? 'Save tracking' : 'Confirm'}
               </button>
               <button type="button" onClick={() => setDialog(null)} className={adminButton.secondary}>
                 Back
@@ -295,6 +329,28 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
                 <p className="mt-0.5 text-slate-700">{order.notes}</p>
               </div>
             ) : null}
+          </Panel>
+          <Panel title="Shipping and tracking">
+            {order.trackingNumber || order.courier ? (
+              <dl className="space-y-1 px-5 py-4 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-slate-500">Courier</dt>
+                  <dd className="text-right font-medium text-slate-900">{order.courier ?? 'Not recorded'}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-slate-500">Tracking number</dt>
+                  <dd className="break-all text-right font-mono text-slate-900">{order.trackingNumber ?? 'Not recorded'}</dd>
+                </div>
+                {order.shippedAt ? (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-500">Shipped</dt>
+                    <dd className="text-right text-slate-900">{formatDateTime(order.shippedAt)}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            ) : (
+              <p className="px-5 py-4 text-sm text-slate-500">No courier or tracking number yet. They are added when you mark the order as shipped.</p>
+            )}
           </Panel>
           <Panel title="Payments">
             {order.transactions.length === 0 ? (

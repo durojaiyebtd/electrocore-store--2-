@@ -158,10 +158,31 @@ Open **http://localhost:3000**. 🎉
 
 ---
 
+## 2b. How shoppers and admins move through the store
+
+**Shoppers (no login wall).** Anyone can open the Home page, Shop, a product page, and add or remove items in the cart drawer or cart page. The cart is saved on the server and linked to the browser by a cookie, so it works for guests.
+
+**Checkout sign-in gateway.** When a shopper presses "Checkout securely", the `/checkout` page checks (on the server) whether they are signed in or have chosen guest checkout. If not, they are sent to `/checkout/auth`, which offers three tabs: **Sign in**, **Quick signup**, and **Guest** (email only). After any of them they return to `/checkout` automatically and pay in Naira with Paystack. The payment API (`POST /api/checkout`) repeats the check, so the gate cannot be skipped by calling the API directly.
+
+**Header.** Home, Shop, Search, Account (shows "Sign in" when signed out) and the Cart with a live count. The **Admin Portal** link appears next to Home and Shop only when the signed-in user has the ADMIN role. Customers never see it.
+
+**Blocking /admin.** `src/middleware.ts` runs before any `/admin` page or `/api/admin` call. A signed-in customer is sent to the home page, and a visitor who is not signed in is sent to `/login`. Both see an "Unauthorized Access" alert. Every admin page and API also re-checks the role in the database with `requireAdmin`.
+
 ## 3. Admin portal
 
-Open **http://localhost:3000/admin** and sign in with the admin account created by `npm run setup`
-(the `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` you set in `.env`).
+Open **http://localhost:3000/admin**. If you are not signed in as an admin you are sent to **/login**.
+
+**Make your own account an admin (`seed:admin`).** Every new sign-up is a `CUSTOMER`. To promote an account:
+
+1. Sign up in the shop with your email (or skip this step and use step 2b).
+2. In the project folder run:
+   - 2a. account already exists: `npm run seed:admin -- you@example.com`
+   - 2b. account does not exist yet, create it as admin in one go:
+     - Windows PowerShell: `$env:ADMIN_PASSWORD="a-long-password"; npm run seed:admin -- you@example.com`
+     - macOS / Linux: `ADMIN_PASSWORD="a-long-password" npm run seed:admin -- you@example.com`
+3. Go to `/login`, sign in, and you land in the admin portal.
+
+`npm run setup` also creates a first admin from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `.env`.
 
 > **Already ran the seed before the admin portal existed?** Run `npm run db:push` once so the database
 > picks up the new order-timeline fields. Nothing is deleted.
@@ -169,15 +190,16 @@ Open **http://localhost:3000/admin** and sign in with the admin account created 
 | Screen | What you can do |
 | --- | --- |
 | **Dashboard** | Revenue for today, 7 and 30 days (Nigerian time), a 14-day sales chart, best sellers, orders waiting to be fulfilled, orders flagged for review, low stock |
-| **Orders** | Filter by status, search by order number, name, email or phone. Move orders through *Paid → Processing → Shipped → Delivered*, cancel (optionally putting items back in stock), refund through Paystack or record a manual refund, resolve flagged orders. Every change is written to the order's timeline with the admin's email |
-| **Products** | Search and filter, hide/show products instantly, add new products, edit text, images, specs, options (Color, Storage…) and variants with Naira prices and "was" prices |
+| **Orders** | Filter by status, search by order number, name, email or phone. Click an order number to open a side drawer with the customer's phone, delivery address and Paystack reference, and a dropdown that changes the status live. Move orders through *Paid → Processing → Shipped → Delivered*, cancel (optionally putting items back in stock), refund through Paystack or record a manual refund, resolve flagged orders. Every change is written to the order's timeline with the admin's email |
+| **Products** | Search and filter, hide/show products instantly. **Add product** and **Edit** open a dialog (title, Naira price, stock, image URL, tech specs, category, on-sale switch); the full editor handles options and variants with "was" prices |
+| **Transactions** | Every Paystack payment attempt with reference, Naira amount, status, channel and date; filter by status, search by reference, order or email |
 | **Inventory** | Restock low items, correct counts, record returns, and see the full stock history (sales, returns, supplier syncs, manual changes) |
 | **Customers** | Registered customers with order count and total spent; grant or remove admin access |
 | **Categories** | Create, rename, re-order and delete categories (empty ones only) |
 | **Settings** | Paystack status (live / test / mock / missing), the webhook URL to copy into Paystack, recent webhooks, and a **Run sync now** button for your supplier feed |
 
 **How access is protected**
-- `src/middleware.ts` sends anyone without an admin session to `/admin/login` before any admin page loads.
+- `src/middleware.ts` sends anyone without an admin session to `/login` before any admin page loads, and answers `/api/admin/*` with 401 (not signed in) or 403 (signed in but not an admin).
 - Every admin page and API call re-checks the user's role **in the database**, so removing someone's admin access
   takes effect on their very next click.
 - To add another admin: have them create a normal account on the store, then open **Customers** and choose
@@ -193,6 +215,34 @@ Open **http://localhost:3000/admin** and sign in with the admin account created 
   for a file you place in the `public/products` folder.
 
 ---
+
+### Admin pages and what each button does
+
+Sign in at **/admin/login** (also linked as "Staff login" in the store footer). Only accounts with the ADMIN role get in.
+
+| Page | What you can do |
+| --- | --- |
+| Dashboard | Revenue, orders, customers and average order tiles each open their page. Banners link to paid orders to fulfil, flagged orders and out-of-stock products. |
+| Orders | Search, filter by status, open a side panel or the full order page, move the status (shipping asks for courier and tracking number), cancel with restock, refund through Paystack, add or edit tracking, print, email the customer. |
+| Products | Search and filter, add, edit (modal or full editor for variants), show or hide, **delete** (blocked while an unfinished order contains the product). |
+| Transactions | Search and filter every Paystack payment. |
+| Inventory | Low-stock list, set or add stock with a reason, full stock history. |
+| Reports | Pick dates, see gross sales, refunds, net revenue, discounts, delivery fees, best sellers, status and payment-method breakdowns. Download CSVs for orders, payments, customers and inventory, or print the summary. |
+| Customers | Search, view spend, open a customer's orders, grant or remove admin access. |
+| Categories | Add, rename, delete. |
+| Settings | Paystack mode, webhook URL (copy button), supplier sync. |
+
+After pulling this update run `npx prisma db push` once. It only adds three optional order fields (courier, trackingNumber, shippedAt), so existing orders are untouched.
+
+### Photos, homepage order and website content
+
+- **Upload photos.** In Products, open Add or Edit and press "Upload photo from your computer" (JPG, PNG or WebP, up to 3 MB). The photo is stored in your database and served from `/api/images/...`, so it works on Vercel. For a very large catalogue, move to a photo host such as Cloudinary later.
+- **Homepage order.** The "Top picks" row shows a mix with one product per category in turn, and monitors and HP laptops are placed last. To choose products yourself, open a product and set **Homepage priority** (0 = automatic; 100 shows first, 90 second, and so on). The shop's default order also respects it.
+- **Website content.** Under Website content you can change the homepage headline, text and button, switch on an announcement bar, and upload the wide banner. Saved changes show on the store immediately.
+- **Notifications.** Paid orders to ship, flagged orders, low stock, failed payments and refunds, built live from your data.
+- **Cart pop-up.** Adding to the cart opens the cart drawer with the new item at the top (photo, name, option, quantity, price) and Continue shopping / Proceed to checkout buttons.
+
+The database now updates itself: every build (for example each Vercel or Railway deploy) runs `scripts/db-sync.mjs`, which applies `prisma db push` safely before `next build`, so you do not need a terminal. It needs `DATABASE_URL` set in your hosting environment variables; set `DB_SYNC=off` to disable it. This update adds a homepage-priority number to products and two new tables (uploaded photos and site settings). Existing data is untouched.
 
 ## 4. Paystack webhook (recommended)
 
@@ -275,6 +325,7 @@ Do the local steps in section 0 first so you know the project works on your comp
 | `npm run typecheck` | Check all TypeScript types |
 | `npm run db:push` | Apply schema changes to MongoDB |
 | `npm run db:seed` | (Re)load the demo catalog — safe to run repeatedly |
+| `npm run seed:admin -- you@example.com` | Make that account an ADMIN (see section 3) |
 | `npm run db:studio` | Open Prisma Studio to browse/edit data in your browser |
 | `npm run supplier:sync` | Pull latest products/prices/stock from your supplier feed |
 | `npm run art:generate` | Regenerate the demo product images in `public/products` |
@@ -328,6 +379,7 @@ If you later want a separate Express server, the controllers and services can be
 | GET | `/api/orders`, `/api/orders/:orderNumber` | Signed-in customer's orders |
 | POST | `/api/admin/sync?supplier=http` | Supplier sync (admin session, or header `Authorization: Bearer ADMIN_API_TOKEN` for cron jobs) |
 | GET | `/api/admin/dashboard` | Dashboard figures (admin only, like every `/api/admin/*` route) |
+| GET | `/api/admin/transactions` | Paystack transaction log (admin only) |
 | GET · GET/PATCH | `/api/admin/orders`, `/api/admin/orders/:orderNumber` | List orders · view / change status |
 | POST | `/api/admin/orders/:orderNumber/refund` · `/review` | Refund (Paystack or manual) · resolve a flagged order |
 | GET/POST · GET/PUT/PATCH | `/api/admin/products`, `/api/admin/products/:id` | List / create · view / update / show-hide |

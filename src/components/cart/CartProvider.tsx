@@ -21,6 +21,8 @@ interface CartContextValue {
   pendingItemIds: string[];
   error: string | null;
   isDrawerOpen: boolean;
+  /** id of the cart line the shopper just added (shown at the top of the drawer), or null */
+  justAddedItemId: string | null;
   openDrawer: () => void;
   closeDrawer: () => void;
   refresh: () => Promise<void>;
@@ -68,8 +70,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  const openDrawer = useCallback(() => setDrawerOpen(true), []);
-  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const [justAddedItemId, setJustAddedItemId] = useState<string | null>(null);
+  const openDrawer = useCallback(() => {
+    setJustAddedItemId(null);
+    setDrawerOpen(true);
+  }, []);
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setJustAddedItemId(null);
+  }, []);
   const clearError = useCallback(() => setError(null), []);
 
   const markPending = (itemId: string, pending: boolean) =>
@@ -81,6 +90,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const next = await apiFetch<CartDTO>('/api/cart/items', { method: 'POST', body: { variantId, quantity } });
       setCart(next);
+      setJustAddedItemId(next.items.find((item) => item.variantId === variantId)?.id ?? null);
       if (options?.openDrawer !== false) setDrawerOpen(true);
       return true;
     } catch (err) {
@@ -138,6 +148,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       pendingItemIds,
       error,
       isDrawerOpen,
+      justAddedItemId,
       openDrawer,
       closeDrawer,
       refresh,
@@ -146,7 +157,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       clearError,
     }),
-    [cart, loading, addingVariantId, pendingItemIds, error, isDrawerOpen, openDrawer, closeDrawer, clearError, refresh, addItem, updateQuantity, removeItem],
+    [cart, loading, addingVariantId, pendingItemIds, error, isDrawerOpen, justAddedItemId, openDrawer, closeDrawer, clearError, refresh, addItem, updateQuantity, removeItem],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

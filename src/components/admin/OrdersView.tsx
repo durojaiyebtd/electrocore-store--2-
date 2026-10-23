@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { formatMoney } from '@/lib/currency';
 import type { OrderStatus } from '@/types';
+import { OrderDrawer } from './OrderDrawer';
 import type { AdminOrderSummaryDTO, Paginated } from '@/types/admin';
 import {
   EmptyState,
@@ -52,6 +52,7 @@ export function OrdersView() {
   if (q) params.set('q', q);
   params.set('page', String(page));
   const { data, error, loading, reload } = useAdminQuery<Paginated<AdminOrderSummaryDTO>>(`/api/admin/orders?${params.toString()}`);
+  const [openOrder, setOpenOrder] = useState<string | null>(null);
 
   const update = useCallback(
     (changes: Record<string, string | null>) => {
@@ -115,9 +116,14 @@ export function OrdersView() {
                   {data.items.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3">
-                        <Link href={`/admin/orders/${order.orderNumber}`} className="font-mono text-xs font-semibold text-brand-700 hover:underline">
+                        <button
+                          type="button"
+                          onClick={() => setOpenOrder(order.orderNumber)}
+                          className="font-mono text-xs font-semibold text-brand-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
+                          aria-label={`Open order ${order.orderNumber}`}
+                        >
                           {order.orderNumber}
-                        </Link>
+                        </button>
                         <p className="text-xs text-slate-500">{order.itemCount} item{order.itemCount === 1 ? '' : 's'}</p>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3 text-slate-600">{formatDateTime(order.createdAt)}</td>
@@ -142,6 +148,7 @@ export function OrdersView() {
           </>
         )}
       </Panel>
+      {openOrder ? <OrderDrawer orderNumber={openOrder} onClose={() => setOpenOrder(null)} onChanged={reload} /> : null}
     </div>
   );
 }

@@ -19,6 +19,8 @@ export interface DashboardDTO {
   salesByDay: Array<{ date: string; revenue: number; orders: number }>;
   recentOrders: AdminOrderSummaryDTO[];
   lowStock: LowStockDTO[];
+  /** Number of active physical variants with zero stock */
+  outOfStockCount: number;
   topProducts: Array<{ productName: string; productSlug: string; quantity: number; revenue: number }>;
 }
 
@@ -64,11 +66,21 @@ export interface AdminTransactionDTO {
   createdAt: string;
 }
 
+/** One row of the Paystack transaction log (/admin/transactions). Amount is NGN kobo. */
+export interface AdminTransactionLogDTO extends AdminTransactionDTO {
+  id: string;
+  orderNumber: string;
+  customerEmail: string;
+}
+
 export interface AdminOrderDetailDTO extends AdminOrderSummaryDTO {
   phone: string;
   notes: string | null;
   reviewReason: string | null;
   restockedAt: string | null;
+  courier: string | null;
+  trackingNumber: string | null;
+  shippedAt: string | null;
   isRegisteredCustomer: boolean;
   shippingAddress: { line1: string; line2: string | null; city: string; state: string; country: string; postalCode: string | null };
   subtotal: number;
@@ -105,6 +117,7 @@ export interface AdminProductSummaryDTO {
   variantCount: number;
   isActive: boolean;
   featured: boolean;
+  homeRank: number;
   source: string;
   fulfillment: Fulfillment;
   updatedAt: string;
@@ -137,6 +150,7 @@ export interface AdminProductDetailDTO {
   fulfillment: Fulfillment;
   warrantyMonths: number;
   featured: boolean;
+  homeRank: number;
   isActive: boolean;
   source: string;
   externalId: string;
@@ -189,4 +203,33 @@ export interface SystemStatusDTO {
   webhookUrl: string;
   recentWebhooks: Array<{ id: string; event: string; reference: string | null; signatureValid: boolean; error: string | null; processedAt: string | null; createdAt: string }>;
   productsBySource: Array<{ source: string; count: number }>;
+}
+
+export interface ReportDTO {
+  from: string;
+  to: string;
+  /** All money values are NGN kobo */
+  gross: number;
+  discounts: number;
+  shipping: number;
+  refunds: number;
+  net: number;
+  orders: number;
+  refundedOrders: number;
+  unitsSold: number;
+  averageOrderValue: number;
+  failedPayments: number;
+  byDay: Array<{ date: string; revenue: number; orders: number }>;
+  byStatus: Array<{ status: string; orders: number; total: number }>;
+  byChannel: Array<{ channel: string; payments: number; total: number }>;
+  topProducts: Array<{ productName: string; sku: string; quantity: number; revenue: number }>;
+}
+
+export interface AdminNotificationDTO {
+  id: string;
+  kind: 'new_order' | 'review' | 'low_stock' | 'out_of_stock' | 'failed_payment' | 'refund';
+  title: string;
+  detail: string;
+  href: string;
+  at: string;
 }

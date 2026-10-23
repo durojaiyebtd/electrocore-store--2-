@@ -70,6 +70,7 @@ export async function listProducts(query: {
       variantCount: product._count.variants,
       isActive: product.isActive,
       featured: product.featured,
+      homeRank: product.homeRank,
       source: product.source,
       fulfillment: product.fulfillment as Fulfillment,
       updatedAt: product.updatedAt.toISOString(),
@@ -101,6 +102,7 @@ export async function getProduct(id: string): Promise<AdminProductDetailDTO> {
     fulfillment: product.fulfillment as Fulfillment,
     warrantyMonths: product.warrantyMonths,
     featured: product.featured,
+    homeRank: product.homeRank,
     isActive: product.isActive,
     source: product.source,
     externalId: product.externalId,
@@ -208,6 +210,7 @@ export async function createProduct(input: ProductInput, admin: AdminUser): Prom
       fulfillment: input.fulfillment,
       warrantyMonths: input.warrantyMonths,
       featured: input.featured,
+      homeRank: input.homeRank,
       isActive: input.isActive,
       source: 'manual',
       externalId: `MANUAL-${randomCode(10)}`,
@@ -280,6 +283,7 @@ export async function updateProduct(id: string, input: ProductInput, admin: Admi
       fulfillment: input.fulfillment,
       warrantyMonths: input.warrantyMonths,
       featured: input.featured,
+      homeRank: input.homeRank,
       isActive: input.isActive,
       category: { connect: { id: input.categoryId } },
     },
@@ -337,4 +341,34 @@ export async function setProductActive(id: string, isActive: boolean): Promise<A
   if (!product) throw new ApiError(404, 'Product not found.', 'PRODUCT_NOT_FOUND');
   await prisma.product.update({ where: { id }, data: { isActive } });
   return getProduct(id);
+}
+
+/**
+ * Permanently deletes a product with its variants, stock history and cart lines.
+ * Past orders keep their own copy of the name, SKU and price, so order history is unaffected.
+ * Refused while any unfinished order (awaiting payment, paid, or being processed) still contains it.
+ */
+export async function deleteProduct(id: string, admin: AdminUser): Promise<{ deleted: true; name: string }> {
+  const product = await prisma.product.findUnique({ where: { id }, select: { id: true, name: true } });
+  if (!product) throw new ApiError(404, 'Product not found.', 'PRODUCT_NOT_FOUND');
+
+  const openOrders = await prisma.orderItem.count({
+    where: { productId: id, order: { is: { status: { in: ['PENDING', 'PAID', 'PROCESSING'] } } } },
+  });
+  if (openOrders > 0) {
+    throw new ApiError(
+      409,
+      `${product.name} is in ${openOrders} unfinished order${openOrders === 1 ? '' : 's'}. Ship or cancel those orders first, or hide the product instead.`,
+      'PRODUCT_IN_OPEN_ORDERS',
+    );
+  }
+
+  const variants = await prisma.productVariant.findMany({ where: { productId: id }, select: { id: true } });
+  const variantIds = variants.map((variant) => variant.id);
+  await prisma.cartItem.deleteMany({ where: { variantId: { in: variantIds } } });
+  await prisma.inventoryLog.deleteMany({ where: { productId: id } });
+  await prisma.productVariant.deleteMany({ where: { productId: id } });
+  await prisma.product.delete({ where: { id } });
+  console.info(`[admin] ${admin.email} deleted product ${product.name} (${id})`);
+  return { deleted: true, name: product.name };
 }

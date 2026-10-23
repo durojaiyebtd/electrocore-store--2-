@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { formatMoney } from '@/lib/currency';
@@ -104,6 +105,9 @@ export function CustomersView() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">
                           {customer.role === 'ADMIN' ? <Pill tone="blue">Admin</Pill> : null}
+                          <Link href={`/admin/orders?q=${encodeURIComponent(customer.email)}`} className="text-xs font-semibold text-brand-700 hover:underline">
+                            Orders
+                          </Link>
                           <button
                             type="button"
                             onClick={() => {

@@ -54,7 +54,7 @@ export async function getDashboard(): Promise<DashboardDTO> {
   const start30 = new Date(todayStart.getTime() - 29 * DAY_MS);
   const start60 = new Date(todayStart.getTime() - 59 * DAY_MS);
 
-  const [paidOrders, statusGroups, needsReview, customersTotal, customersNew, recent, lowStock, topProducts] = await Promise.all([
+  const [paidOrders, statusGroups, needsReview, customersTotal, customersNew, recent, lowStock, outOfStockCount, topProducts] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: REVENUE_STATUSES }, paidAt: { gte: start60 } },
       select: { total: true, paidAt: true },
@@ -70,6 +70,9 @@ export async function getDashboard(): Promise<DashboardDTO> {
       take: 8,
     }),
     getLowStock(8),
+    prisma.productVariant.count({
+      where: { isActive: true, stock: { lte: 0 }, product: { is: { isActive: true, fulfillment: 'PHYSICAL' } } },
+    }),
     prisma.orderItem.groupBy({
       by: ['productName', 'productSlug'],
       where: { order: { is: { status: { in: REVENUE_STATUSES }, paidAt: { gte: start30 } } } },
@@ -130,6 +133,7 @@ export async function getDashboard(): Promise<DashboardDTO> {
     salesByDay: Array.from(byDay.entries()).map(([date, value]) => ({ date, ...value })),
     recentOrders: recent.map(toAdminOrderSummary),
     lowStock,
+    outOfStockCount,
     topProducts: topProducts.map((row) => ({
       productName: row.productName,
       productSlug: row.productSlug,

@@ -1,10 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { errorResponse, ok, parseBody, parseQuery } from '@/lib/http';
+import { getSession } from '@/lib/auth';
+import { getGuestEmail } from '@/lib/guest-checkout';
+import { ApiError, errorResponse, ok, parseBody, parseQuery } from '@/lib/http';
 import { checkoutSchema, verifyQuerySchema } from '@/lib/validators';
 import { handleWebhook, initializeCheckout, verifyPayment } from '../services/payment.service';
 
 /** POST /api/checkout — validates the form, creates the order and starts a Paystack transaction */
 export async function initialize(req: NextRequest) {
+  // Checkout sign-in gateway: shoppers must be signed in OR have chosen "continue as guest" first.
+  const [session, guestEmail] = await Promise.all([getSession(), getGuestEmail()]);
+  if (!session && !guestEmail) {
+    throw new ApiError(401, 'Please sign in or continue as a guest before paying.', 'CHECKOUT_AUTH_REQUIRED');
+  }
   const input = await parseBody(req, checkoutSchema);
   return ok(await initializeCheckout(input), { status: 201 });
 }

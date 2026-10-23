@@ -20,6 +20,12 @@ export const orderListQuerySchema = listQuerySchema.extend({
   review: z.enum(['1']).optional(),
 });
 
+export const PAYMENT_STATUSES = ['INITIALIZED', 'SUCCESS', 'FAILED', 'ABANDONED', 'REVERSED', 'REFUNDED'] as const;
+
+export const transactionListQuerySchema = listQuerySchema.extend({
+  status: z.enum(PAYMENT_STATUSES).optional(),
+});
+
 export const productListQuerySchema = listQuerySchema.extend({
   category: objectId.optional(),
   status: z.enum(['active', 'inactive', 'low', 'out']).optional(),
@@ -29,6 +35,27 @@ export const updateOrderStatusSchema = z.object({
   status: z.enum(ORDER_STATUSES),
   note: z.string().trim().max(500).optional(),
   restock: z.boolean().optional(),
+  /** Optional dispatch details, saved when the order is marked as shipped */
+  courier: z.string().trim().max(60).optional(),
+  trackingNumber: z.string().trim().max(80).optional(),
+});
+
+export const trackingSchema = z.object({
+  courier: z.string().trim().min(2, 'Enter the courier name, e.g. GIG Logistics.').max(60),
+  trackingNumber: z.string().trim().min(3, 'Enter the tracking number.').max(80),
+});
+
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use the date format YYYY-MM-DD.');
+
+export const reportQuerySchema = z.object({
+  from: dateOnly.optional(),
+  to: dateOnly.optional(),
+});
+
+export const REPORT_EXPORTS = ['orders', 'transactions', 'customers', 'inventory'] as const;
+
+export const reportExportQuerySchema = reportQuerySchema.extend({
+  type: z.enum(REPORT_EXPORTS),
 });
 
 export const refundOrderSchema = z.object({
@@ -92,6 +119,7 @@ export const productInputSchema = z
     fulfillment: z.enum(['PHYSICAL', 'DIGITAL', 'SERVICE']),
     warrantyMonths: z.coerce.number().int().min(0).max(240).default(0),
     featured: z.boolean().default(false),
+    homeRank: z.coerce.number().int().min(0, 'Homepage priority cannot be negative.').max(1000).default(0),
     isActive: z.boolean().default(true),
     variants: z.array(variantInputSchema).min(1, 'Add at least one variant (price and stock).').max(100),
   })

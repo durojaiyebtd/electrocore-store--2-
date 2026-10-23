@@ -9,9 +9,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { apiFetch } from '@/lib/api-client';
 import type { SessionUserDTO } from '@/types';
 
-/** Only allow redirects to admin pages on this site. */
-function safeNext(value: string | null): string {
-  return value && value.startsWith('/admin') && !value.startsWith('//') ? value : '/admin';
+/** Only allow redirects to admin pages on this site (never to another website). */
+function adminNext(value: string | null): string | null {
+  return value && value.startsWith('/admin') && !value.startsWith('//') ? value : null;
 }
 
 export function AdminLoginView() {
@@ -28,13 +28,20 @@ export function AdminLoginView() {
     setBusy(true);
     try {
       const { user } = await apiFetch<{ user: SessionUserDTO }>('/api/auth/login', { method: 'POST', body: { email, password } });
+      const target = adminNext(searchParams.get('next'));
       if (user.role !== 'ADMIN') {
-        await apiFetch('/api/auth/logout', { method: 'POST' });
-        setError('This account does not have admin access. Ask an existing admin to grant it under Customers.');
-        setBusy(false);
+        if (target) {
+          // They were trying to reach /admin: customers are not allowed in, so end the session again
+          await apiFetch('/api/auth/logout', { method: 'POST' });
+          setError('This account does not have admin access. Run "npm run seed:admin -- your@email.com" or ask an existing admin to grant it under Customers.');
+          setBusy(false);
+          return;
+        }
+        router.push('/account');
+        router.refresh();
         return;
       }
-      router.push(safeNext(searchParams.get('next')));
+      router.push(target ?? '/admin');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign in.');
@@ -49,13 +56,13 @@ export function AdminLoginView() {
           <LogoMark className="h-10 w-10" />
           <div className="leading-tight">
             <p className="font-bold text-slate-900">ElectroCore</p>
-            <p className="text-sm text-slate-500">Admin portal</p>
+            <p className="text-sm text-slate-500">Sign in</p>
           </div>
         </div>
 
         <form onSubmit={submit} className="mt-8 rounded-2xl bg-white p-6 shadow-2xl">
           <h1 className="text-xl font-semibold text-slate-900">Sign in</h1>
-          <p className="mt-1 text-sm text-slate-500">Use an account with admin access.</p>
+          <p className="mt-1 text-sm text-slate-500">Store administrators go to the admin portal; customers go to their account.</p>
           <div className="mt-6 space-y-4">
             <div>
               <label htmlFor="admin-email" className="field-label">Email address</label>
@@ -66,6 +73,14 @@ export function AdminLoginView() {
               <input id="admin-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-input" />
             </div>
           </div>
+          {!error && searchParams.get('error') === 'unauthorized' ? (
+            <p role="alert" className="mt-4 flex gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800">
+              <AlertIcon size={18} className="mt-0.5 shrink-0" />
+              <span>
+                <strong>Unauthorized Access.</strong> Sign in with an administrator account to open the admin portal.
+              </span>
+            </p>
+          ) : null}
           {error ? (
             <p role="alert" className="mt-4 flex gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800">
               <AlertIcon size={18} className="mt-0.5 shrink-0" />
@@ -74,7 +89,7 @@ export function AdminLoginView() {
           ) : null}
           <button type="submit" disabled={busy} className="btn-primary mt-6 w-full">
             {busy ? <Spinner /> : <LockIcon size={18} />}
-            Sign in to admin
+            Sign in
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-slate-500">

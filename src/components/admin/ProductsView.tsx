@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { PlusIcon } from '@/components/ui/Icons';
@@ -10,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { AdminCategoryDTO, AdminProductSummaryDTO, Paginated } from '@/types/admin';
 import { EmptyState, ErrorBanner, LoadingBlock, PageHeader, Pagination, Panel, Pill, SearchField, StockPill, Tabs, adminButton, adminInput, formatRelative, useAdminQuery } from './ui';
 import { ProductImage } from '@/components/product/ProductImage';
+import { ProductModal } from './ProductModal';
 
 type StatusFilter = 'all' | 'active' | 'inactive' | 'low' | 'out';
 
@@ -23,6 +23,13 @@ export function ProductsView() {
   const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1);
   const [toggling, setToggling] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  /** null = closed, 'new' = create dialog, otherwise the id of the product being edited */
+  const [dialog, setDialog] = useState<null | 'new' | string>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  /** Product waiting for the "Yes, delete" confirmation */
+  const [deleting, setDeleting] = useState<AdminProductSummaryDTO | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const params = new URLSearchParams();
   if (q) params.set('q', q);
@@ -61,16 +68,32 @@ export function ProductsView() {
     }
   }
 
+  async function confirmDelete() {
+    if (!deleting) return;
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await apiFetch(`/api/admin/products/${deleting.id}`, { method: 'DELETE' });
+      setNotice(`${deleting.name} was deleted.`);
+      setDeleting(null);
+      reload();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Could not delete the product.');
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Products"
         description="Edit prices, descriptions and variants, or add products you source yourself."
         actions={
-          <Link href="/admin/products/new" className={adminButton.primary}>
+          <button type="button" onClick={() => setDialog('new')} className={adminButton.primary}>
             <PlusIcon size={16} />
             Add product
-          </Link>
+          </button>
         }
       />
 
@@ -108,6 +131,11 @@ export function ProductsView() {
             <ErrorBanner message={actionError} />
           </div>
         ) : null}
+        {notice ? (
+          <p role="status" className="mx-4 mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+            {notice}
+          </p>
+        ) : null}
 
         {error ? (
           <div className="p-4">
@@ -120,9 +148,9 @@ export function ProductsView() {
             title="No products found"
             body={q || category || status !== 'all' ? 'Try a different search or filter.' : 'Add your first product, or run a supplier sync from Settings.'}
             action={
-              <Link href="/admin/products/new" className={adminButton.primary}>
+              <button type="button" onClick={() => setDialog('new')} className={adminButton.primary}>
                 Add product
-              </Link>
+              </button>
             }
           />
         ) : (
@@ -136,7 +164,8 @@ export function ProductsView() {
                     <th className="px-3 py-2.5 text-right font-medium">Price</th>
                     <th className="px-3 py-2.5 font-medium">Stock</th>
                     <th className="px-3 py-2.5 font-medium">Source</th>
-                    <th className="px-4 py-2.5 text-right font-medium">On sale</th>
+                    <th className="px-3 py-2.5 text-right font-medium">On sale</th>
+                    <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -148,9 +177,9 @@ export function ProductsView() {
                             <ProductImage src={product.image} alt="" className="h-full w-full object-contain" />
                           </div>
                           <div className="min-w-0">
-                            <Link href={`/admin/products/${product.id}`} className="font-medium text-slate-900 hover:text-brand-700">
+                            <button type="button" onClick={() => setDialog(product.id)} className="text-left font-medium text-slate-900 hover:text-brand-700">
                               {product.name}
-                            </Link>
+                            </button>
                             <p className="text-xs text-slate-500">
                               {product.brand} · {product.variantCount} variant{product.variantCount === 1 ? '' : 's'} · edited {formatRelative(product.updatedAt)}
                             </p>
@@ -169,7 +198,7 @@ export function ProductsView() {
                         <StockPill stock={product.totalStock} fulfillment={product.fulfillment} />
                       </td>
                       <td className="px-3 py-3 text-xs text-slate-500">{product.source === 'manual' ? 'Added here' : `Supplier: ${product.source}`}</td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 py-3 text-right">
                         <button
                           type="button"
                           role="switch"
@@ -185,6 +214,22 @@ export function ProductsView() {
                           <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', product.isActive ? 'translate-x-5' : 'translate-x-0.5')} />
                         </button>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button type="button" onClick={() => setDialog(product.id)} className="text-sm font-semibold text-brand-700 hover:underline" aria-label={`Edit ${product.name}`}>
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleting(product);
+                          }}
+                          className="ml-3 text-sm font-semibold text-rose-700 hover:underline"
+                          aria-label={`Delete ${product.name}`}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -194,6 +239,44 @@ export function ProductsView() {
           </>
         )}
       </Panel>
+
+      {deleting ? (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" role="presentation">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={() => (deleteBusy ? undefined : setDeleting(null))} aria-hidden="true" />
+          <div role="alertdialog" aria-modal="true" aria-labelledby="delete-title" className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 id="delete-title" className="text-lg font-semibold text-slate-900">Delete this product?</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              <strong>{deleting.name}</strong> will be removed from the store for good, together with its variants and stock history. Past orders keep their own record of it. If you only want to stop selling it, use the On sale switch instead.
+            </p>
+            {deleteError ? (
+              <div className="mt-3">
+                <ErrorBanner message={deleteError} />
+              </div>
+            ) : null}
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setDeleting(null)} disabled={deleteBusy} className={adminButton.secondary}>
+                Cancel
+              </button>
+              <button type="button" onClick={() => void confirmDelete()} disabled={deleteBusy} className={adminButton.danger}>
+                {deleteBusy ? 'Deleting…' : 'Yes, delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {dialog ? (
+        <ProductModal
+          productId={dialog === 'new' ? undefined : dialog}
+          categories={categories ?? []}
+          onClose={() => setDialog(null)}
+          onSaved={(message) => {
+            setDialog(null);
+            setNotice(message);
+            reload();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

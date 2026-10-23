@@ -84,14 +84,15 @@ export function DashboardView() {
   const change = changeLabel(data.revenue.last30Days, data.revenue.previous30Days);
   const tiles = [
     {
+      href: '/admin/transactions',
       label: 'Revenue, last 30 days',
       value: formatMoney(data.revenue.last30Days),
       sub: change.text,
       subClass: change.tone === 'up' ? 'text-emerald-700' : change.tone === 'down' ? 'text-rose-700' : 'text-slate-500',
     },
-    { label: 'Paid orders, last 30 days', value: String(data.orders.last30Days), sub: `${formatMoney(data.revenue.today)} today`, subClass: 'text-slate-500' },
-    { label: 'Average order value', value: formatMoney(data.averageOrderValue30Days), sub: `${formatMoney(data.revenue.last7Days)} in the last 7 days`, subClass: 'text-slate-500' },
-    { label: 'Customers', value: String(data.customers.total), sub: `${data.customers.newLast30Days} new in 30 days`, subClass: 'text-slate-500' },
+    { href: '/admin/orders', label: 'Paid orders, last 30 days', value: String(data.orders.last30Days), sub: `${formatMoney(data.revenue.today)} today`, subClass: 'text-slate-500' },
+    { href: '/admin/reports', label: 'Average order value', value: formatMoney(data.averageOrderValue30Days), sub: `${formatMoney(data.revenue.last7Days)} in the last 7 days`, subClass: 'text-slate-500' },
+    { href: '/admin/customers', label: 'Customers', value: String(data.customers.total), sub: `${data.customers.newLast30Days} new in 30 days`, subClass: 'text-slate-500' },
   ];
 
   return (
@@ -105,6 +106,15 @@ export function DashboardView() {
           </button>
         }
       />
+
+      {data.outOfStockCount > 0 ? (
+        <Link href="/admin/products" className="flex items-center justify-between gap-3 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 hover:border-rose-500">
+          <span>
+            <strong className="tabular-nums">{data.outOfStockCount}</strong> product option{data.outOfStockCount === 1 ? ' is' : 's are'} out of stock and cannot be bought
+          </span>
+          <span className="font-semibold">Restock</span>
+        </Link>
+      ) : null}
 
       {data.orders.needsReview > 0 || data.orders.awaitingFulfilment > 0 ? (
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -129,11 +139,11 @@ export function DashboardView() {
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {tiles.map((tile) => (
-          <div key={tile.label} className="rounded-xl border border-slate-200 bg-white p-4">
+          <Link key={tile.label} href={tile.href} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-brand-400 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600">
             <p className="text-xs font-medium text-slate-500">{tile.label}</p>
             <p className="mt-2 text-xl font-semibold tracking-tight text-slate-900 tabular-nums sm:text-2xl">{tile.value}</p>
             <p className={cn('mt-1 text-xs', tile.subClass)}>{tile.sub}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -212,7 +222,7 @@ export function DashboardView() {
         </Panel>
 
         <Panel
-          title="Low stock"
+          title="Out of stock and low stock"
           actions={
             <Link href="/admin/inventory" className="text-xs font-semibold text-brand-700 hover:underline">
               Inventory

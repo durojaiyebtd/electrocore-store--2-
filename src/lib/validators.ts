@@ -71,6 +71,10 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password.'),
 });
 
+export const guestSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
+});
+
 export const verifyQuerySchema = z.object({
   reference: z.string().trim().min(6).max(100).regex(/^[A-Za-z0-9.=-]+$/, 'Invalid payment reference.'),
 });

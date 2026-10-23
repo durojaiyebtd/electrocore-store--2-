@@ -64,6 +64,9 @@ function toAdminOrderDetail(order: OrderForDetail): AdminOrderDetailDTO {
     notes: order.notes ?? null,
     reviewReason: order.reviewReason ?? null,
     restockedAt: order.restockedAt ? order.restockedAt.toISOString() : null,
+    courier: order.courier ?? null,
+    trackingNumber: order.trackingNumber ?? null,
+    shippedAt: order.shippedAt ? order.shippedAt.toISOString() : null,
     isRegisteredCustomer: Boolean(order.userId),
     shippingAddress: {
       line1: order.shippingAddress.line1,
@@ -166,7 +169,7 @@ export async function getOrderDetail(orderNumber: string): Promise<AdminOrderDet
 
 export async function updateOrderStatus(
   orderNumber: string,
-  input: { status: OrderStatus; note?: string; restock?: boolean },
+  input: { status: OrderStatus; note?: string; restock?: boolean; courier?: string; trackingNumber?: string },
   admin: AdminUser,
 ): Promise<AdminOrderDetailDTO> {
   const order = await loadOrder(orderNumber);
@@ -184,13 +187,22 @@ export async function updateOrderStatus(
   // Optimistic concurrency: only update if nobody else changed the status meanwhile
   const updated = await prisma.order.updateMany({
     where: { id: order.id, status: order.status },
-    data: { status: input.status as PrismaOrderStatus },
+    data: {
+      status: input.status as PrismaOrderStatus,
+      ...(input.status === 'SHIPPED'
+        ? { shippedAt: new Date(), courier: input.courier || null, trackingNumber: input.trackingNumber || null }
+        : {}),
+    },
   });
   if (updated.count === 0) {
     throw new ApiError(409, 'This order was updated by someone else. Refresh to see the latest status.', 'STATUS_CHANGED');
   }
 
   let note = input.note || null;
+  if (input.status === 'SHIPPED' && (input.courier || input.trackingNumber)) {
+    const dispatch = [input.courier, input.trackingNumber ? `tracking ${input.trackingNumber}` : null].filter(Boolean).join(', ');
+    note = [note, `Dispatched via ${dispatch}.`].filter(Boolean).join(' ');
+  }
   if (input.status === 'CANCELLED' && order.paidAt && input.restock !== false) {
     const restocked = await restockOrder(order.id, admin.email);
     if (restocked) note = [note, 'Items returned to stock.'].filter(Boolean).join(' ');
@@ -202,6 +214,28 @@ export async function updateOrderStatus(
   await prisma.order.update({
     where: { id: order.id },
     data: { events: { push: { status: input.status as PrismaOrderStatus, note, actor: admin.email, at: new Date() } } },
+  });
+  return getOrderDetail(orderNumber);
+}
+
+/** Saves or corrects courier and tracking details on an order that is being shipped or already shipped. */
+export async function setTracking(
+  orderNumber: string,
+  input: { courier: string; trackingNumber: string },
+  admin: AdminUser,
+): Promise<AdminOrderDetailDTO> {
+  const order = await loadOrder(orderNumber);
+  const status = order.status as OrderStatus;
+  if (status !== 'PROCESSING' && status !== 'SHIPPED' && status !== 'PAID') {
+    throw new ApiError(409, 'Tracking can only be added to paid orders that are not yet delivered or cancelled.', 'INVALID_TRANSITION');
+  }
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      courier: input.courier,
+      trackingNumber: input.trackingNumber,
+      events: { push: { status: order.status, note: `Tracking updated: ${input.courier}, ${input.trackingNumber}.`, actor: admin.email, at: new Date() } },
+    },
   });
   return getOrderDetail(orderNumber);
 }
