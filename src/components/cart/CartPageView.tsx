@@ -96,7 +96,7 @@ export function CartPageView() {
             className={hasUnavailable ? 'btn-primary pointer-events-none mt-6 w-full !bg-slate-300 !shadow-none' : 'btn-primary mt-6 w-full'}
           >
             <LockIcon size={18} />
-            Checkout securely
+            Proceed to Checkout
           </Link>
           <p className="mt-3 text-center text-xs text-slate-500">Pay by card, bank transfer or USSD via Paystack.</p>
         </aside>

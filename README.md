@@ -54,7 +54,7 @@ npm run typecheck
 npm run dev
 ```
 
-7. Open http://localhost:3000. Admin: http://localhost:3000/admin/login (login from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`).
+7. Open http://localhost:3000. Click **Sign In** in the header and sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (or make your own account an admin with `npm run seed:admin -- --email you@example.com`, see section 3). An **Admin Portal** link then appears in the header.
 8. Before deploying, run `npm run build` once locally. If it prints an error, send me the exact text.
 
 > `npm run catalog:technocrat` replaces the 29 demo products with the catalogue in `src/data/products.json`. Do **not** run
@@ -149,7 +149,7 @@ Open **http://localhost:3000**. 🎉
 
 ### Step 5 — Make a test payment
 
-1. Add products to the cart → **Checkout securely** → fill in the form → **Pay**.
+1. Add products to the cart → **Proceed to Checkout** → sign in or use **Quick sign-up** (checkout needs an account; browsing and the cart don't) → fill in the delivery form → **Pay ₦… with Paystack**.
 2. You are sent to Paystack's test page. Use Paystack's test card:
    - Card number `4084 0840 8408 4081`, any future expiry date, CVV `408`
    - If asked: PIN `0000`, OTP `123456`
@@ -160,28 +160,64 @@ Open **http://localhost:3000**. 🎉
 
 ## 3. Admin portal
 
-Open **http://localhost:3000/admin** and sign in with the admin account created by `npm run setup`
-(the `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` you set in `.env`).
+### 3.1 Who can do what
+
+| Visitor | Can do |
+| --- | --- |
+| Anyone (not signed in) | Browse the homepage, shop and product pages, search, and add to the cart. The cart is kept in a secure cookie, so it survives page reloads and browser restarts. |
+| Signed-in **CUSTOMER** | Everything above, plus checkout and Paystack payment, and order history under **Account**. Every new registration is a CUSTOMER. |
+| Signed-in **ADMIN** | Everything above, plus the **Admin Portal** link in the header and everything under `/admin`. |
+
+**Checkout sign-in.** When a shopper who isn't signed in clicks **Proceed to Checkout**, the checkout page shows a
+**Sign in / Quick sign-up** screen with their cart beside it. As soon as they sign in, their guest cart is merged into
+their account and they go straight on to the delivery form and **Pay with Paystack**. If a session ends just as they
+press Pay, the sign-in screen comes back and payment starts automatically once they sign in again. The server also
+refuses to start a Paystack payment without a signed-in account, so the rule can't be skipped.
+
+### 3.2 Make yourself an admin (`npm run seed:admin`)
+
+1. Start the store (`npm run dev`), click **Sign In → Quick sign-up** in the header and create your account.
+2. In the terminal, in the project folder, run (with your own email):
+
+   ```bash
+   npm run seed:admin -- --email you@example.com
+   ```
+
+   It prints `✓ you@example.com (…) is now an ADMIN.` and lists all admins.
+3. Refresh the store in your browser. The **Admin Portal** link appears in the header, next to Home and Shop.
+   (If it doesn't, sign out and sign back in.)
+
+Other forms: `npm run seed:admin` on its own lists the current admins (or uses `SEED_ADMIN_EMAIL` from `.env`), and
+`npm run seed:admin -- --email someone@example.com --revoke` turns an admin back into a customer. The store always
+keeps at least one admin. `npm run setup` also creates the admin from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
+
+### 3.3 Screens
 
 > **Already ran the seed before the admin portal existed?** Run `npm run db:push` once so the database
 > picks up the new order-timeline fields. Nothing is deleted.
 
 | Screen | What you can do |
 | --- | --- |
-| **Dashboard** | Revenue for today, 7 and 30 days (Nigerian time), a 14-day sales chart, best sellers, orders waiting to be fulfilled, orders flagged for review, low stock |
-| **Orders** | Filter by status, search by order number, name, email or phone. Move orders through *Paid → Processing → Shipped → Delivered*, cancel (optionally putting items back in stock), refund through Paystack or record a manual refund, resolve flagged orders. Every change is written to the order's timeline with the admin's email |
-| **Products** | Search and filter, hide/show products instantly, add new products, edit text, images, specs, options (Color, Storage…) and variants with Naira prices and "was" prices |
+| **Dashboard** (`/admin`) | Revenue cards in ₦ (all time, last 30 days, today), **Total orders**, **Low-stock alerts** (red badge when any item has 5 units or fewer), customers, a 14-day sales chart, best sellers, and a **Recent sales** table (click an order to open it) |
+| **Orders** (`/admin/orders`) | Filter by status (Pending, Paid, Processing, Shipped, Delivered, Needs review, Cancelled, Refunded, Failed) and search by order number, name, email or phone. Click an order to open a **detail window** with the customer's shipping address, phone number, Paystack reference(s), items and totals, and a **status selector** (Paid → Processing → Shipped → Delivered, or Cancel). Refunds and the full timeline are on the order's full page. Every change is written to the order's timeline with the admin's email |
+| **Transactions** (`/admin/transactions`) | Every Paystack transaction: reference, order, customer, channel, ₦ amount, date and verification status (Verified, Awaiting payment, Failed, Abandoned, Refunded, Reversed), with totals of verified payments |
+| **Products** (`/admin/products`) | Inventory table with search, category and status filters. **Add product** and **Edit** open a form window: Title, Category, Price (₦), Stock count, Image URL, Tech specs, Description. **Archive** hides a product from the store (kept for order history); **Restore** puts it back. **Full editor** handles variants (Color, Storage…), "was" prices and more |
 | **Inventory** | Restock low items, correct counts, record returns, and see the full stock history (sales, returns, supplier syncs, manual changes) |
 | **Customers** | Registered customers with order count and total spent; grant or remove admin access |
 | **Categories** | Create, rename, re-order and delete categories (empty ones only) |
 | **Settings** | Paystack status (live / test / mock / missing), the webhook URL to copy into Paystack, recent webhooks, and a **Run sync now** button for your supplier feed |
 
 **How access is protected**
-- `src/middleware.ts` sends anyone without an admin session to `/admin/login` before any admin page loads.
+- `src/middleware.ts` runs before every `/admin` page and `/api/admin` call. Anyone who isn't signed in as an ADMIN is
+  sent to the home page, which shows an **Unauthorized Access** alert (with a Sign in link if they aren't signed in).
+  Admin API calls answer `401` or `403` instead.
+- Admins sign in through the normal **Sign In** page. There is no separate admin login page.
 - Every admin page and API call re-checks the user's role **in the database**, so removing someone's admin access
   takes effect on their very next click.
 - To add another admin: have them create a normal account on the store, then open **Customers** and choose
-  **Make admin**. You can't remove your own access, and the store always keeps at least one admin.
+  **Make admin** (or run `npm run seed:admin -- --email them@example.com`). You can't remove your own access, and the
+  store always keeps at least one admin.
+- Roles can't be chosen at sign-up: the server ignores any role sent from the browser and every new account is a CUSTOMER.
 
 **Good to know**
 - Products added in the portal are marked "Added here" and are never overwritten by supplier syncs. Products that
@@ -275,6 +311,7 @@ Do the local steps in section 0 first so you know the project works on your comp
 | `npm run typecheck` | Check all TypeScript types |
 | `npm run db:push` | Apply schema changes to MongoDB |
 | `npm run db:seed` | (Re)load the demo catalog — safe to run repeatedly |
+| `npm run seed:admin -- --email you@example.com` | Make a registered account an ADMIN (`--revoke` to undo; no email = list admins) |
 | `npm run db:studio` | Open Prisma Studio to browse/edit data in your browser |
 | `npm run supplier:sync` | Pull latest products/prices/stock from your supplier feed |
 | `npm run art:generate` | Regenerate the demo product images in `public/products` |
@@ -290,7 +327,7 @@ scripts/                      seed, supplier sync, product-image generator
 src/
   app/                        Pages (App Router) and API routes
     (store)/                  Storefront pages, wrapped in the shop header/footer
-    admin/                    Admin portal: /admin/login and the signed-in (portal) pages
+    admin/                    Admin portal pages (dashboard, orders, transactions, products, inventory…)
     api/                      Thin route files that mount controllers (like Express routers)
     api/admin/                Admin-only API (dashboard, orders, refunds, products, inventory…)
   middleware.ts               Blocks /admin and /api/admin for anyone who isn't an admin
@@ -321,16 +358,18 @@ If you later want a separate Express server, the controllers and services can be
 | GET / DELETE | `/api/cart` | Read / empty the cart |
 | POST | `/api/cart/items` | Add `{ variantId, quantity }` |
 | PATCH / DELETE | `/api/cart/items/:itemId` | Change quantity (`0` removes) / remove |
-| POST | `/api/checkout` | Validate details, create order, initialise Paystack, return `authorizationUrl` |
+| POST | `/api/checkout` | **Signed-in customers only** (401 `AUTH_REQUIRED` otherwise). Validate details, create order, initialise Paystack, return `authorizationUrl` |
 | GET | `/api/checkout/verify?reference=` | Verify with Paystack and finalise the order |
 | POST | `/api/webhooks/paystack` | Paystack webhook (signature-verified) |
-| POST | `/api/auth/register` · `/login` · `/logout`, GET `/api/auth/me` | Customer accounts |
+| POST | `/api/auth/register` · `/login` · `/logout`, GET `/api/auth/me` | Customer accounts (new accounts are always CUSTOMER; `/me` also refreshes the session if the role changed) |
 | GET | `/api/orders`, `/api/orders/:orderNumber` | Signed-in customer's orders |
 | POST | `/api/admin/sync?supplier=http` | Supplier sync (admin session, or header `Authorization: Bearer ADMIN_API_TOKEN` for cron jobs) |
 | GET | `/api/admin/dashboard` | Dashboard figures (admin only, like every `/api/admin/*` route) |
 | GET · GET/PATCH | `/api/admin/orders`, `/api/admin/orders/:orderNumber` | List orders · view / change status |
 | POST | `/api/admin/orders/:orderNumber/refund` · `/review` | Refund (Paystack or manual) · resolve a flagged order |
-| GET/POST · GET/PUT/PATCH | `/api/admin/products`, `/api/admin/products/:id` | List / create · view / update / show-hide |
+| GET/POST · GET/PUT/PATCH | `/api/admin/products`, `/api/admin/products/:id` | List / create · view / update / show-hide (archive) |
+| POST · PUT | `/api/admin/products/quick`, `/api/admin/products/:id/quick` | Quick create / edit (title, category, ₦ price, stock, image URL, specs) |
+| GET | `/api/admin/transactions?status=&q=&page=` | Paystack transaction log with verification status and totals |
 | GET · GET · POST | `/api/admin/inventory`, `/inventory/low-stock`, `/inventory/adjust` | Stock history · low stock · logged adjustment |
 | GET · PATCH | `/api/admin/customers`, `/api/admin/customers/:id` | Customers · change role |
 | GET/POST · PUT/DELETE | `/api/admin/categories`, `/api/admin/categories/:id` | Category management |
@@ -441,7 +480,8 @@ and are converted for display and for the Paystack charge. Your Paystack account
 | "Online payment is not configured yet" at checkout | Add a real `sk_test_…` key, or set `PAYSTACK_MOCK_MODE="true"` locally |
 | `AUTH_SECRET must be set…` | Put a 32+ character random string in `AUTH_SECRET` |
 | Atlas connection timeout | Atlas → Network Access → add your current IP address |
-| `/admin/login` says the account has no admin access | Sign in with the seeded admin, or have an existing admin use **Customers → Make admin** |
+| Opening `/admin` shows **Unauthorized Access** on the home page | Sign in first (header → **Sign In**). If you are signed in, your account isn't an admin yet: run `npm run seed:admin -- --email you@example.com`, then refresh |
+| Admin Portal link missing after `seed:admin` | Refresh the page; if it's still missing, sign out and sign back in |
 | Admin pages error about unknown field `events` or `restockedAt` | Run `npm run db:push` once to update the database |
 | Paid but order still pending | Check the webhook URL in Paystack and the `webhook_events` collection (`npm run db:studio`) |
 

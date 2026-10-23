@@ -16,6 +16,7 @@
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "db:studio": "prisma studio",
     "setup": "npm run db:push && npm run db:seed",
+    "seed:admin": "tsx --env-file=.env scripts/seed-admin.ts",
     "supplier:sync": "tsx --env-file=.env scripts/sync-supplier.ts",
     "catalog:import": "node scripts/import-full-catalog.js",
     "catalog:technocrat": "tsx --env-file=.env scripts/sync-supplier.ts technocrat --replace-demo",

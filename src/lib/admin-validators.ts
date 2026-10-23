@@ -20,6 +20,12 @@ export const orderListQuerySchema = listQuerySchema.extend({
   review: z.enum(['1']).optional(),
 });
 
+export const PAYMENT_STATUSES = ['INITIALIZED', 'SUCCESS', 'FAILED', 'ABANDONED', 'REVERSED', 'REFUNDED'] as const;
+
+export const transactionListQuerySchema = listQuerySchema.extend({
+  status: z.enum(PAYMENT_STATUSES).optional(),
+});
+
 export const productListQuerySchema = listQuerySchema.extend({
   category: objectId.optional(),
   status: z.enum(['active', 'inactive', 'low', 'out']).optional(),
@@ -112,6 +118,42 @@ export const productInputSchema = z
     });
   });
 export type ProductInput = z.infer<typeof productInputSchema>;
+
+/**
+ * Quick create / edit form in Admin -> Products (a modal with the essentials).
+ * Products with several variants (sizes, colours…) are still edited in the full editor.
+ */
+export const quickProductSchema = z.object({
+  name: z.string().trim().min(3, 'Enter a product title (at least 3 characters).').max(160),
+  categoryId: objectId,
+  /** Optional; when blank the first word of the title is used (e.g. "HP", "Samsung"). */
+  brand: z.string().trim().max(60).optional().default(''),
+  /** Selling price in whole Naira, converted to kobo. */
+  price: z.coerce
+    .number({ invalid_type_error: 'Enter the price in Naira, e.g. 250000.' })
+    .positive('Enter a price above ₦0.')
+    .max(1_000_000_000)
+    .transform((value) => toMinor(value)),
+  stock: z.coerce
+    .number({ invalid_type_error: 'Enter the number of units in stock.' })
+    .int('Stock must be a whole number.')
+    .min(0, 'Stock cannot be negative.')
+    .max(1_000_000),
+  imageUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((value) => value === '' || value.startsWith('/') || /^https:\/\//.test(value), 'Image URL must start with https:// or with / for a file in your public folder.')
+    .optional()
+    .default(''),
+  specs: z
+    .array(z.object({ label: z.string().trim().min(1, 'Each spec needs a name.').max(60), value: z.string().trim().min(1, 'Each spec needs a value.').max(300) }))
+    .max(40)
+    .default([]),
+  description: z.string().trim().max(8000).optional().default(''),
+  isActive: z.boolean().default(true),
+});
+export type QuickProductInput = z.infer<typeof quickProductSchema>;
 
 export const stockAdjustmentSchema = z
   .object({

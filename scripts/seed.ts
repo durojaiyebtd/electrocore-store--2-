@@ -48,7 +48,7 @@ async function main() {
         role: 'ADMIN',
       },
     });
-    console.log(`  ✓ Admin user created: ${adminEmail} — sign in at /admin`);
+    console.log(`  ✓ Admin user created: ${adminEmail} — sign in on the store (header → Sign In), then open Admin Portal`);
   } else {
     console.log(`  • Admin user already exists: ${adminEmail}`);
   }

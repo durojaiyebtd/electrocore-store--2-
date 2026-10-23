@@ -1,21 +1,28 @@
 'use client';
 
 /**
- * Checkout: delivery details -> server creates the order -> redirect to Paystack.
- * The server recalculates every price, stock level and delivery fee; the summary
- * here is a live preview so shoppers see the exact total before paying.
+ * Checkout: Cart -> Account (sign in / quick sign-up) -> Delivery -> Paystack.
+ *
+ * - Anyone can browse and fill a cart. Paying needs an account, so a shopper who is not
+ *   signed in sees the sign-in step first; the guest cart is merged into their account.
+ * - The server recalculates every price, stock level and delivery fee; the summary here
+ *   is a live preview so shoppers see the exact total before paying.
+ * - If the session ends between filling the form and pressing Pay (the API answers 401),
+ *   the sign-in step comes back and payment starts automatically right after signing in.
  */
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useCart } from '@/components/cart/CartProvider';
 import { AlertIcon, LockIcon } from '@/components/ui/Icons';
 import { Spinner } from '@/components/ui/Spinner';
-import { apiFetch } from '@/lib/api-client';
+import { ClientApiError, apiFetch } from '@/lib/api-client';
 import { CURRENCIES, formatMoney, getStoreCurrency } from '@/lib/currency';
 import { NIGERIAN_STATES, quoteShipping } from '@/lib/shipping';
 import { cn } from '@/lib/utils';
-import type { CheckoutInitDTO, SessionUserDTO } from '@/types';
+import type { CheckoutInitDTO } from '@/types';
 import { ProductImage } from '@/components/product/ProductImage';
+import { CheckoutAuthGate } from './CheckoutAuthGate';
 
 interface FormState {
   email: string;
@@ -57,30 +64,35 @@ function validate(form: FormState): Errors {
   return errors;
 }
 
-const STEPS = ['Cart', 'Details', 'Payment', 'Confirmation'];
+const STEPS = ['Cart', 'Account', 'Delivery', 'Payment'];
+
+function isAuthError(error: unknown): boolean {
+  return error instanceof ClientApiError && (error.status === 401 || error.code === 'AUTH_REQUIRED' || error.code === 'UNAUTHENTICATED');
+}
 
 export function CheckoutView() {
   const { cart, loading } = useCart();
+  const { user, checking, refreshUser } = useAuth();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  /** true when Pay was pressed but the session had ended; payment resumes after sign-in */
+  const [resumeAfterSignIn, setResumeAfterSignIn] = useState(false);
+  const prefilledFor = useRef<string | null>(null);
 
-  // Prefill from the signed-in account
+  // Prefill contact details from the signed-in account (once per account)
   useEffect(() => {
-    apiFetch<{ user: SessionUserDTO | null }>('/api/auth/me')
-      .then(({ user }) => {
-        if (!user) return;
-        setForm((f) => ({
-          ...f,
-          email: f.email || user.email,
-          firstName: f.firstName || user.firstName,
-          lastName: f.lastName || user.lastName,
-          phone: f.phone || user.phone || '',
-        }));
-      })
-      .catch(() => undefined);
-  }, []);
+    if (!user || prefilledFor.current === user.id) return;
+    prefilledFor.current = user.id;
+    setForm((f) => ({
+      ...f,
+      email: f.email || user.email,
+      firstName: f.firstName || user.firstName,
+      lastName: f.lastName || user.lastName,
+      phone: f.phone || user.phone || '',
+    }));
+  }, [user]);
 
   const quote = useMemo(() => quoteShipping(cart.subtotal, form.state, cart.hasPhysicalItems), [cart.subtotal, form.state, cart.hasPhysicalItems]);
   const total = cart.subtotal + quote.fee;
@@ -91,8 +103,8 @@ export function CheckoutView() {
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  /** Validates the form, creates the order on the server and redirects to Paystack. */
+  const startPayment = useCallback(async () => {
     setServerError(null);
     const found = validate(form);
     setErrors(found);
@@ -116,12 +128,30 @@ export function CheckoutView() {
       });
       window.location.assign(result.authorizationUrl);
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Could not start payment. Please try again.');
       setSubmitting(false);
+      if (isAuthError(err)) {
+        setResumeAfterSignIn(true);
+        await refreshUser(); // clears the signed-in state, which brings back the sign-in step
+        return;
+      }
+      setServerError(err instanceof Error ? err.message : 'Could not start payment. Please try again.');
     }
+  }, [form, refreshUser]);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void startPayment();
   }
 
-  if (loading) {
+  // Signed back in after an expired session → continue straight to Paystack
+  useEffect(() => {
+    if (user && resumeAfterSignIn) {
+      setResumeAfterSignIn(false);
+      void startPayment();
+    }
+  }, [user, resumeAfterSignIn, startPayment]);
+
+  if (loading || (checking && !user)) {
     return (
       <div className="container-page grid h-96 place-items-center text-brand-600">
         <Spinner className="h-8 w-8" />
@@ -141,6 +171,87 @@ export function CheckoutView() {
     );
   }
 
+  const currentStep = user ? 2 : 1;
+
+  const itemsList = (
+    <ul className="mt-4 max-h-80 divide-y divide-slate-200 overflow-y-auto pr-1">
+      {cart.items.map((item) => (
+        <li key={item.id} className="flex gap-3 py-3">
+          <div className="relative h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white">
+            <ProductImage src={item.image} alt="" className="h-full w-full rounded-lg object-contain" />
+            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-brand-500 px-1 text-[0.7rem] font-semibold text-white">
+              {item.quantity}
+            </span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-sm font-medium text-slate-900">{item.productName}</p>
+            {item.variantName !== 'Standard' ? <p className="text-xs text-slate-500">{item.variantName}</p> : null}
+            {!item.available ? <p className="text-xs font-medium text-rose-700">No longer available</p> : null}
+          </div>
+          <p className="text-sm font-medium text-slate-900 tabular-nums">{formatMoney(item.lineTotal)}</p>
+        </li>
+      ))}
+    </ul>
+  );
+
+  const stepper = (
+    <ol className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Checkout progress">
+      {STEPS.map((step, index) => (
+        <li key={step} className="flex items-center gap-3">
+          <span
+            className={cn('flex items-center gap-2', index === currentStep ? 'font-semibold text-slate-900' : 'text-slate-500')}
+            aria-current={index === currentStep ? 'step' : undefined}
+          >
+            <span
+              className={cn(
+                'grid h-6 w-6 place-items-center rounded-full text-xs font-semibold',
+                index <= currentStep ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-600',
+              )}
+            >
+              {index + 1}
+            </span>
+            {step}
+          </span>
+          {index < STEPS.length - 1 ? <span className="h-px w-6 bg-slate-300" aria-hidden="true" /> : null}
+        </li>
+      ))}
+    </ol>
+  );
+
+  // ---------------------------------------------------------------- Account step
+  if (!user) {
+    const summary = (
+      <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-6 lg:sticky lg:top-28" aria-label="Order summary">
+        <h2 className="text-lg font-semibold text-slate-900">Your cart</h2>
+        {itemsList}
+        <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-4">
+          <span className="font-semibold text-slate-900">Subtotal</span>
+          <span className="text-xl font-semibold text-slate-900 tabular-nums">{formatMoney(cart.subtotal)}</span>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">Delivery is added in the next step, once you choose your state.</p>
+        <Link href="/cart" className="mt-4 inline-block text-sm font-semibold text-brand-700 underline-offset-4 hover:underline">
+          Edit cart
+        </Link>
+      </aside>
+    );
+    return (
+      <div className="container-page py-8 sm:py-12">
+        {stepper}
+        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900">Checkout</h1>
+        <CheckoutAuthGate
+          summary={summary}
+          sessionExpired={resumeAfterSignIn}
+          onAuthenticated={() => {
+            // AuthProvider already holds the new user, so this re-renders into the delivery step.
+            prefilledFor.current = null;
+            window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+          }}
+        />
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------- Delivery + payment step
   const field = (key: keyof FormState, label: string, props: InputHTMLAttributes<HTMLInputElement> = {}, optional = false) => (
     <div>
       <label htmlFor={`checkout-${key}`} className="field-label">
@@ -166,26 +277,14 @@ export function CheckoutView() {
 
   return (
     <div className="container-page py-8 sm:py-12">
-      <ol className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Checkout progress">
-        {STEPS.map((step, index) => (
-          <li key={step} className="flex items-center gap-3">
-            <span className={cn('flex items-center gap-2', index === 1 ? 'font-semibold text-slate-900' : 'text-slate-500')} aria-current={index === 1 ? 'step' : undefined}>
-              <span
-                className={cn(
-                  'grid h-6 w-6 place-items-center rounded-full text-xs font-semibold',
-                  index < 1 ? 'bg-brand-600 text-white' : index === 1 ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-600',
-                )}
-              >
-                {index + 1}
-              </span>
-              {step}
-            </span>
-            {index < STEPS.length - 1 ? <span className="h-px w-6 bg-slate-300" aria-hidden="true" /> : null}
-          </li>
-        ))}
-      </ol>
+      {stepper}
 
-      <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900">Checkout</h1>
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Checkout</h1>
+        <p className="text-sm text-slate-600">
+          Signed in as <span className="font-medium text-slate-900">{user.email}</span>
+        </p>
+      </div>
 
       <form onSubmit={submit} noValidate className="mt-8 grid gap-10 lg:grid-cols-[1fr_400px]">
         <div className="space-y-10">
@@ -254,24 +353,7 @@ export function CheckoutView() {
 
         <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-6 lg:sticky lg:top-28" aria-label="Order summary">
           <h2 className="text-lg font-semibold text-slate-900">Order summary</h2>
-          <ul className="mt-4 max-h-80 divide-y divide-slate-200 overflow-y-auto pr-1">
-            {cart.items.map((item) => (
-              <li key={item.id} className="flex gap-3 py-3">
-                <div className="relative h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white">
-                  <ProductImage src={item.image} alt="" className="h-full w-full rounded-lg object-contain" />
-                  <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-brand-500 px-1 text-[0.7rem] font-semibold text-white">
-                    {item.quantity}
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-medium text-slate-900">{item.productName}</p>
-                  {item.variantName !== 'Standard' ? <p className="text-xs text-slate-500">{item.variantName}</p> : null}
-                  {!item.available ? <p className="text-xs font-medium text-rose-700">No longer available</p> : null}
-                </div>
-                <p className="text-sm font-medium text-slate-900 tabular-nums">{formatMoney(item.lineTotal)}</p>
-              </li>
-            ))}
-          </ul>
+          {itemsList}
 
           <dl className="mt-4 space-y-2.5 border-t border-slate-200 pt-4 text-sm">
             <div className="flex justify-between">
@@ -281,7 +363,11 @@ export function CheckoutView() {
             <div className="flex justify-between gap-4">
               <dt className="text-slate-600">
                 Delivery
-                {quote.eta ? <span className="block text-xs text-slate-400">{quote.zoneLabel}, {quote.eta}</span> : null}
+                {quote.eta ? (
+                  <span className="block text-xs text-slate-400">
+                    {quote.zoneLabel}, {quote.eta}
+                  </span>
+                ) : null}
               </dt>
               <dd className="text-right text-slate-900 tabular-nums">
                 {quote.reason === 'STATE_REQUIRED' ? 'Select a state' : quote.fee === 0 ? 'Free' : formatMoney(quote.fee)}
@@ -311,7 +397,7 @@ export function CheckoutView() {
 
           <button type="submit" disabled={submitting || hasUnavailable} className="btn-primary mt-6 w-full">
             {submitting ? <Spinner /> : <LockIcon size={18} />}
-            {submitting ? 'Connecting to Paystack…' : `Pay ${formatMoney(total)}`}
+            {submitting ? 'Connecting to Paystack…' : `Pay ${formatMoney(total)} with Paystack`}
           </button>
           <p className="mt-3 text-center text-xs leading-relaxed text-slate-500">
             You will be taken to Paystack to pay securely in {CURRENCIES[getStoreCurrency()].name} by card, bank transfer or USSD. We never see

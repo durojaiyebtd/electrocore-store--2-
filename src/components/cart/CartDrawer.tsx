@@ -11,11 +11,13 @@ import { Spinner } from '@/components/ui/Spinner';
 import { formatMoney } from '@/lib/currency';
 import { freeShippingThreshold } from '@/lib/shipping';
 import { pluralize } from '@/lib/utils';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { CartLineItem } from './CartLineItem';
 import { useCart } from './CartProvider';
 
 export function CartDrawer() {
   const { cart, loading, isDrawerOpen, closeDrawer, error, clearError } = useCart();
+  const { user } = useAuth();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -135,7 +137,10 @@ export function CartDrawer() {
                 {formatMoney(cart.subtotal)}
               </dd>
             </dl>
-            <p className="mt-1 text-sm text-slate-500">Delivery is calculated at checkout.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Delivery is calculated at checkout.
+              {!user ? ' You will sign in or create an account before paying; your cart is kept.' : null}
+            </p>
             <div className="mt-4 grid gap-2">
               <Link
                 href="/checkout"
@@ -148,7 +153,7 @@ export function CartDrawer() {
                 }
               >
                 <LockIcon size={18} />
-                Checkout securely
+                Proceed to Checkout
               </Link>
               <Link
                 href="/cart"

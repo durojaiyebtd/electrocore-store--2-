@@ -66,9 +66,34 @@ export async function logout(): Promise<void> {
   await destroySession();
 }
 
+/** The signed-in user, read fresh from the database (safe to call while rendering a page). */
 export async function currentUser(): Promise<SessionUserDTO | null> {
   const session = await getSession();
   if (!session) return null;
   const user = await prisma.user.findUnique({ where: { id: session.userId } });
   return user ? toSessionUser(user) : null;
+}
+
+/**
+ * Same as currentUser(), and also brings the session cookie up to date. Use it only
+ * in API route handlers (cookies can't be written while a page renders).
+ *
+ * Why: the role is stored inside the signed session cookie, and the middleware
+ * reads it from there. When `npm run seed:admin` or Admin -> Customers changes
+ * someone's role, the next call to GET /api/auth/me re-issues their cookie with
+ * the new role, so the Admin Portal link works without signing out and back in.
+ * A cookie for a deleted account is removed.
+ */
+export async function currentUserWithFreshSession(): Promise<SessionUserDTO | null> {
+  const session = await getSession();
+  if (!session) return null;
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user) {
+    await destroySession();
+    return null;
+  }
+  if (user.role !== session.role || user.email !== session.email) {
+    await createSession({ userId: user.id, email: user.email, role: user.role });
+  }
+  return toSessionUser(user);
 }

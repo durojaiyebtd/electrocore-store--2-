@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { formatMoney } from '@/lib/currency';
 import type { OrderStatus } from '@/types';
-import type { AdminOrderSummaryDTO, Paginated } from '@/types/admin';
+import type { AdminOrderDetailDTO, AdminOrderSummaryDTO, Paginated } from '@/types/admin';
+import { OrderDetailModal } from './OrderDetailModal';
 import {
   EmptyState,
   ErrorBanner,
@@ -25,12 +25,12 @@ type TabValue = 'all' | 'review' | OrderStatus;
 
 const TABS: Array<{ value: TabValue; label: string }> = [
   { value: 'all', label: 'All' },
-  { value: 'PAID', label: 'To fulfil' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'PAID', label: 'Paid · to fulfil' },
   { value: 'PROCESSING', label: 'Processing' },
   { value: 'SHIPPED', label: 'Shipped' },
   { value: 'DELIVERED', label: 'Delivered' },
   { value: 'review', label: 'Needs review' },
-  { value: 'PENDING', label: 'Awaiting payment' },
   { value: 'CANCELLED', label: 'Cancelled' },
   { value: 'REFUNDED', label: 'Refunded' },
   { value: 'FAILED', label: 'Failed' },
@@ -51,7 +51,27 @@ export function OrdersView() {
   if (review) params.set('review', '1');
   if (q) params.set('q', q);
   params.set('page', String(page));
-  const { data, error, loading, reload } = useAdminQuery<Paginated<AdminOrderSummaryDTO>>(`/api/admin/orders?${params.toString()}`);
+  const { data, setData, error, loading, reload } = useAdminQuery<Paginated<AdminOrderSummaryDTO>>(`/api/admin/orders?${params.toString()}`);
+  const [openOrder, setOpenOrder] = useState<string | null>(null);
+
+  // /admin/orders?open=MES-… (used by the dashboard's Recent sales) opens that order's details
+  const openParam = searchParams.get('open');
+  useEffect(() => {
+    if (!openParam) return;
+    setOpenOrder(openParam);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('open');
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [openParam, searchParams, pathname, router]);
+
+  function onOrderUpdated(updated: AdminOrderDetailDTO) {
+    setData((current) =>
+      current
+        ? { ...current, items: current.items.map((row) => (row.orderNumber === updated.orderNumber ? { ...row, status: updated.status, needsReview: updated.needsReview } : row)) }
+        : current,
+    );
+  }
 
   const update = useCallback(
     (changes: Record<string, string | null>) => {
@@ -69,7 +89,7 @@ export function OrdersView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="Orders" description="Fulfil paid orders, update delivery status, cancel or refund." />
+      <PageHeader title="Orders" description="Click an order to see the customer's delivery details, phone number and Paystack reference, and to update its status." />
 
       <Panel>
         <div className="px-4 pt-2">
@@ -113,11 +133,18 @@ export function OrdersView() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {data.items.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-50">
+                    <tr key={order.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setOpenOrder(order.orderNumber)}>
                       <td className="px-4 py-3">
-                        <Link href={`/admin/orders/${order.orderNumber}`} className="font-mono text-xs font-semibold text-brand-700 hover:underline">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setOpenOrder(order.orderNumber);
+                          }}
+                          className="font-mono text-xs font-semibold text-brand-700 hover:underline"
+                        >
                           {order.orderNumber}
-                        </Link>
+                        </button>
                         <p className="text-xs text-slate-500">{order.itemCount} item{order.itemCount === 1 ? '' : 's'}</p>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3 text-slate-600">{formatDateTime(order.createdAt)}</td>
@@ -142,6 +169,8 @@ export function OrdersView() {
           </>
         )}
       </Panel>
+
+      <OrderDetailModal orderNumber={openOrder} onClose={() => setOpenOrder(null)} onUpdated={onOrderUpdated} />
     </div>
   );
 }

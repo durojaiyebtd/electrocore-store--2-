@@ -1,21 +1,31 @@
 'use client';
 
 /**
- * Site header — core navigation ONLY: logo, Home, Shop, search, account, cart.
- * (Legal text, policies and addresses live exclusively in the Footer.)
+ * Site header — core navigation ONLY: logo, Home, Shop, [Admin Portal for admins],
+ * search, cart with live count, and Sign In / Account.
+ * (Legal text, policies, the RC number and addresses live exclusively in the Footer.)
  */
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useCart } from '@/components/cart/CartProvider';
-import { CartIcon, CloseIcon, MenuIcon, SearchIcon, UserIcon } from '@/components/ui/Icons';
+import { CartIcon, CloseIcon, MenuIcon, SearchIcon, ShieldIcon, UserIcon } from '@/components/ui/Icons';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+  admin?: boolean;
+}
+
+const BASE_NAV: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/shop', label: 'Shop' },
-] as const;
+];
+
+const ADMIN_NAV: NavItem = { href: '/admin', label: 'Admin Portal', admin: true };
 
 function isActive(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname.startsWith(href) || (href === '/shop' && pathname.startsWith('/product'));
@@ -83,7 +93,11 @@ function CartButton() {
 
 export function Header() {
   const pathname = usePathname();
+  const { user, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const nav = isAdmin ? [...BASE_NAV, ADMIN_NAV] : BASE_NAV;
+  const accountLabel = user ? 'Account' : 'Sign In';
+  const mobileNav: NavItem[] = [...nav, { href: '/account', label: accountLabel }];
 
   useEffect(() => {
     setMenuOpen(false);
@@ -121,16 +135,21 @@ export function Header() {
 
         <nav aria-label="Main" className="hidden lg:block">
           <ul className="flex items-center gap-1">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   aria-current={isActive(pathname, item.href) ? 'page' : undefined}
                   className={cn(
                     'rounded-md px-3 py-2 text-[0.95rem] font-medium transition-colors',
-                    isActive(pathname, item.href) ? 'text-brand-700' : 'text-slate-600 hover:text-slate-900',
+                    item.admin
+                      ? 'inline-flex items-center gap-1.5 border border-brand-200 bg-brand-50 text-brand-700 hover:border-brand-400'
+                      : isActive(pathname, item.href)
+                        ? 'text-brand-700'
+                        : 'text-slate-600 hover:text-slate-900',
                   )}
                 >
+                  {item.admin ? <ShieldIcon size={16} /> : null}
                   {item.label}
                 </Link>
               </li>
@@ -161,8 +180,8 @@ export function Header() {
             )}
           >
             <UserIcon size={20} />
-            <span className="hidden xl:inline">Account</span>
-            <span className="sr-only xl:hidden">Account</span>
+            <span className="hidden md:inline">{accountLabel}</span>
+            <span className="sr-only md:hidden">{accountLabel}</span>
           </Link>
           <CartButton />
         </div>
@@ -196,17 +215,19 @@ export function Header() {
             </div>
             <nav aria-label="Mobile" className="px-2">
               <ul className="flex flex-col">
-                {[...NAV, { href: '/account', label: 'Account' } as const].map((item) => (
+                {mobileNav.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={() => setMenuOpen(false)}
                       aria-current={isActive(pathname, item.href) ? 'page' : undefined}
                       className={cn(
-                        'flex h-12 items-center rounded-lg px-3 text-base font-medium',
+                        'flex h-12 items-center gap-2 rounded-lg px-3 text-base font-medium',
                         isActive(pathname, item.href) ? 'bg-brand-50 text-brand-700' : 'text-slate-800 hover:bg-slate-50',
+                        item.admin && 'text-brand-700',
                       )}
                     >
+                      {item.admin ? <ShieldIcon size={18} /> : null}
                       {item.label}
                     </Link>
                   </li>

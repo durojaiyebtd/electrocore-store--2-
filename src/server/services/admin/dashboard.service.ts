@@ -25,13 +25,16 @@ export function startOfWatDay(now = new Date()): Date {
   return new Date(shifted.getTime() - WAT_OFFSET_MS);
 }
 
+/** On-sale physical variants with LOW_STOCK_THRESHOLD units or fewer */
+const lowStockWhere = {
+  isActive: true,
+  stock: { lte: LOW_STOCK_THRESHOLD },
+  product: { is: { isActive: true, fulfillment: 'PHYSICAL' as const } },
+};
+
 export async function getLowStock(limit = 10): Promise<LowStockDTO[]> {
   const variants = await prisma.productVariant.findMany({
-    where: {
-      isActive: true,
-      stock: { lte: LOW_STOCK_THRESHOLD },
-      product: { is: { isActive: true, fulfillment: 'PHYSICAL' } },
-    },
+    where: lowStockWhere,
     include: { product: { select: { id: true, name: true } } },
     orderBy: [{ stock: 'asc' }, { updatedAt: 'desc' }],
     take: limit,
@@ -54,7 +57,7 @@ export async function getDashboard(): Promise<DashboardDTO> {
   const start30 = new Date(todayStart.getTime() - 29 * DAY_MS);
   const start60 = new Date(todayStart.getTime() - 59 * DAY_MS);
 
-  const [paidOrders, statusGroups, needsReview, customersTotal, customersNew, recent, lowStock, topProducts] = await Promise.all([
+  const [paidOrders, statusGroups, needsReview, customersTotal, customersNew, recent, lowStock, topProducts, allTime, lowStockCount] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: REVENUE_STATUSES }, paidAt: { gte: start60 } },
       select: { total: true, paidAt: true },
@@ -64,9 +67,9 @@ export async function getDashboard(): Promise<DashboardDTO> {
     prisma.user.count({ where: { role: 'CUSTOMER' } }),
     prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: start30 } } }),
     prisma.order.findMany({
-      where: { status: { not: 'PENDING' } },
+      where: { status: { in: REVENUE_STATUSES }, paidAt: { not: null } },
       include: { items: { select: { quantity: true } }, transactions: { select: { channel: true, status: true }, orderBy: { createdAt: 'desc' }, take: 1 } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { paidAt: 'desc' },
       take: 8,
     }),
     getLowStock(8),
@@ -77,6 +80,8 @@ export async function getDashboard(): Promise<DashboardDTO> {
       orderBy: { _sum: { lineTotal: 'desc' } },
       take: 5,
     }),
+    prisma.order.aggregate({ where: { status: { in: REVENUE_STATUSES } }, _sum: { total: true }, _count: { _all: true } }),
+    prisma.productVariant.count({ where: lowStockWhere }),
   ]);
 
   let today = 0;
@@ -117,9 +122,13 @@ export async function getDashboard(): Promise<DashboardDTO> {
     byStatus[group.status as OrderStatus] = group._count._all;
   }
 
+  const totalOrders = Object.values(byStatus).reduce((sum, count) => sum + count, 0);
+
   return {
-    revenue: { today, last7Days: last7, last30Days: last30, previous30Days: previous30 },
+    revenue: { today, last7Days: last7, last30Days: last30, previous30Days: previous30, allTime: allTime._sum.total ?? 0 },
     orders: {
+      total: totalOrders,
+      paidAllTime: allTime._count._all,
       last30Days: orders30,
       awaitingFulfilment: byStatus.PAID + byStatus.PROCESSING,
       needsReview,
@@ -128,7 +137,9 @@ export async function getDashboard(): Promise<DashboardDTO> {
     averageOrderValue30Days: orders30 > 0 ? Math.round(last30 / orders30) : 0,
     customers: { total: customersTotal, newLast30Days: customersNew },
     salesByDay: Array.from(byDay.entries()).map(([date, value]) => ({ date, ...value })),
-    recentOrders: recent.map(toAdminOrderSummary),
+    recentSales: recent.map(toAdminOrderSummary),
+    lowStockCount,
+    lowStockThreshold: LOW_STOCK_THRESHOLD,
     lowStock,
     topProducts: topProducts.map((row) => ({
       productName: row.productName,

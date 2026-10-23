@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
-import { useCart } from '@/components/cart/CartProvider';
-import { AlertIcon } from '@/components/ui/Icons';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { AuthForm } from '@/components/auth/AuthForm';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Spinner } from '@/components/ui/Spinner';
 import { apiFetch } from '@/lib/api-client';
 import { formatMoney } from '@/lib/currency';
+import { safeNextPath } from '@/lib/safe-redirect';
 import { cn, formatDate, pluralize } from '@/lib/utils';
 import type { OrderDTO, OrderStatus, SessionUserDTO } from '@/types';
 import { ProductImage } from '@/components/product/ProductImage';
@@ -23,22 +25,23 @@ const STATUS_STYLE: Record<OrderStatus, { label: string; className: string }> = 
 };
 
 export function AccountView() {
-  const [user, setUser] = useState<SessionUserDTO | null | undefined>(undefined);
+  const { user, checking } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next');
+  const [redirecting, setRedirecting] = useState(false);
 
-  const loadUser = useCallback(async () => {
-    try {
-      const { user: current } = await apiFetch<{ user: SessionUserDTO | null }>('/api/auth/me');
-      setUser(current);
-    } catch {
-      setUser(null);
-    }
-  }, []);
-
+  // Signed in and sent here with ?next=/somewhere → go back there.
   useEffect(() => {
-    void loadUser();
-  }, [loadUser]);
+    if (!user || !next) return;
+    const target = safeNextPath(next, '/account');
+    if (target !== '/account') {
+      setRedirecting(true);
+      router.replace(target);
+    }
+  }, [user, next, router]);
 
-  if (user === undefined) {
+  if ((checking && !user) || redirecting) {
     return (
       <div className="container-page grid h-80 place-items-center text-brand-600">
         <Spinner className="h-8 w-8" />
@@ -46,127 +49,31 @@ export function AccountView() {
     );
   }
 
-  return user ? <Dashboard user={user} onSignedOut={() => setUser(null)} /> : <AuthForms onSignedIn={setUser} />;
+  return user ? <Dashboard user={user} /> : <SignInPanel next={next} />;
 }
 
-function AuthForms({ onSignedIn }: { onSignedIn: (user: SessionUserDTO) => void }) {
-  const { refresh } = useCart();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '', phone: '' });
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      const body =
-        mode === 'login'
-          ? { email: form.email, password: form.password }
-          : { email: form.email, password: form.password, firstName: form.firstName, lastName: form.lastName, phone: form.phone };
-      const { user } = await apiFetch<{ user: SessionUserDTO }>(`/api/auth/${mode}`, { method: 'POST', body });
-      await refresh(); // guest cart is merged into the account
-      onSignedIn(user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const set = (key: keyof typeof form) => (event: ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [key]: event.target.value }));
-
+function SignInPanel({ next }: { next: string | null }) {
+  const wantsAdmin = safeNextPath(next, '').startsWith('/admin');
   return (
     <div className="container-page flex justify-center py-12 sm:py-20">
       <div className="w-full max-w-md">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{mode === 'login' ? 'Sign in' : 'Create your account'}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Sign in</h1>
         <p className="mt-2 text-slate-600">
-          {mode === 'login' ? 'Track orders, reorder faster and keep your cart across devices.' : 'It takes less than a minute. You can still check out as a guest.'}
+          {wantsAdmin
+            ? 'Sign in with your administrator account to open the Admin Portal.'
+            : 'Track orders, check out faster and keep your cart on every device.'}
         </p>
-
-        <div className="mt-8 grid grid-cols-2 rounded-lg bg-slate-100 p-1" role="tablist" aria-label="Account options">
-          {(['login', 'register'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={mode === tab}
-              onClick={() => {
-                setMode(tab);
-                setError(null);
-              }}
-              className={cn('h-10 rounded-md text-sm font-semibold transition', mode === tab ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900')}
-            >
-              {tab === 'login' ? 'Sign in' : 'Create account'}
-            </button>
-          ))}
+        <div className="mt-8">
+          {/* After success, AccountView's effect sends the user to ?next=, or shows their orders. */}
+          <AuthForm idPrefix="account" onSuccess={() => undefined} />
         </div>
-
-        <form onSubmit={submit} className="mt-6 space-y-4">
-          {mode === 'register' ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="acc-first" className="field-label">First name</label>
-                <input id="acc-first" required autoComplete="given-name" value={form.firstName} onChange={set('firstName')} className="field-input" />
-              </div>
-              <div>
-                <label htmlFor="acc-last" className="field-label">Last name</label>
-                <input id="acc-last" required autoComplete="family-name" value={form.lastName} onChange={set('lastName')} className="field-input" />
-              </div>
-            </div>
-          ) : null}
-          <div>
-            <label htmlFor="acc-email" className="field-label">Email address</label>
-            <input id="acc-email" type="email" required autoComplete="email" value={form.email} onChange={set('email')} className="field-input" />
-          </div>
-          {mode === 'register' ? (
-            <div>
-              <label htmlFor="acc-phone" className="field-label">
-                Phone number <span className="font-normal text-slate-400">(optional)</span>
-              </label>
-              <input id="acc-phone" type="tel" autoComplete="tel" placeholder="0803 123 4567" value={form.phone} onChange={set('phone')} className="field-input" />
-            </div>
-          ) : null}
-          <div>
-            <label htmlFor="acc-password" className="field-label">Password</label>
-            <input
-              id="acc-password"
-              type="password"
-              required
-              minLength={mode === 'register' ? 8 : 1}
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              value={form.password}
-              onChange={set('password')}
-              aria-describedby={mode === 'register' ? 'acc-password-hint' : undefined}
-              className="field-input"
-            />
-            {mode === 'register' ? (
-              <p id="acc-password-hint" className="mt-1.5 text-sm text-slate-500">
-                At least 8 characters, with a letter and a number.
-              </p>
-            ) : null}
-          </div>
-
-          {error ? (
-            <p role="alert" className="flex gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800">
-              <AlertIcon size={18} className="mt-0.5 shrink-0" />
-              {error}
-            </p>
-          ) : null}
-
-          <button type="submit" disabled={busy} className="btn-primary w-full">
-            {busy ? <Spinner /> : null}
-            {mode === 'login' ? 'Sign in' : 'Create account'}
-          </button>
-        </form>
       </div>
     </div>
   );
 }
 
-function Dashboard({ user, onSignedOut }: { user: SessionUserDTO; onSignedOut: () => void }) {
-  const { refresh } = useCart();
+function Dashboard({ user }: { user: SessionUserDTO }) {
+  const { signOut: endSession } = useAuth();
   const [orders, setOrders] = useState<OrderDTO[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -180,9 +87,7 @@ function Dashboard({ user, onSignedOut }: { user: SessionUserDTO; onSignedOut: (
   async function signOut() {
     setSigningOut(true);
     try {
-      await apiFetch('/api/auth/logout', { method: 'POST' });
-      await refresh();
-      onSignedOut();
+      await endSession();
     } finally {
       setSigningOut(false);
     }
@@ -201,7 +106,7 @@ function Dashboard({ user, onSignedOut }: { user: SessionUserDTO; onSignedOut: (
         <div className="flex flex-wrap gap-2">
           {user.role === 'ADMIN' ? (
             <Link href="/admin" className="btn-primary h-10 px-4 text-sm">
-              Open admin portal
+              Open Admin Portal
             </Link>
           ) : null}
           <button type="button" onClick={signOut} disabled={signingOut} className="btn-secondary h-10 px-4 text-sm">

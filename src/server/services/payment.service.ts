@@ -30,12 +30,22 @@ import { deductStockForOrder } from './inventory.service';
 import { createPendingOrder, orderInclude, toOrderDTO } from './order.service';
 
 export async function initializeCheckout(input: CheckoutInput): Promise<CheckoutInitDTO> {
-  const cart = await resolveCart({ create: false });
+  // Browsing and the cart are open to everyone; paying requires an account, so every
+  // order is linked to a customer who can track it. The checkout page shows a sign-in /
+  // quick sign-up screen when this error comes back.
+  const session = await getSession();
+  const account = session
+    ? await prisma.user.findUnique({ where: { id: session.userId }, select: { id: true } })
+    : null;
+  if (!account) {
+    throw new ApiError(401, 'Please sign in or create an account to complete your purchase.', 'AUTH_REQUIRED');
+  }
+
+  const cart = await resolveCart({ create: false, userId: account.id });
   if (!cart || cart.items.length === 0) {
     throw new ApiError(400, 'Your cart is empty.', 'CART_EMPTY');
   }
-  const session = await getSession();
-  const order = await createPendingOrder(cart, input, session?.userId ?? null);
+  const order = await createPendingOrder(cart, input, account.id);
 
   const chargeCurrency = getStoreCurrency();
   const chargeAmount = convertMinor(order.total, BASE_CURRENCY, chargeCurrency);

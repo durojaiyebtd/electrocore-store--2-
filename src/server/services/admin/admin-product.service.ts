@@ -10,7 +10,9 @@ import { ApiError } from '@/lib/http';
 import type { AdminUser } from '@/lib/admin-auth';
 import { randomCode } from '@/lib/ids';
 import { slugify } from '@/lib/utils';
-import type { ProductInput } from '@/lib/admin-validators';
+import type { ProductInput, QuickProductInput } from '@/lib/admin-validators';
+import { site } from '@/lib/site';
+import { adjustStock } from '../inventory.service';
 import type { Fulfillment } from '@/types';
 import type { AdminProductDetailDTO, AdminProductSummaryDTO, Paginated } from '@/types/admin';
 import { PLACEHOLDER_IMAGE } from '../catalog.service';
@@ -336,5 +338,160 @@ export async function setProductActive(id: string, isActive: boolean): Promise<A
   const product = await prisma.product.findUnique({ where: { id }, select: { id: true } });
   if (!product) throw new ApiError(404, 'Product not found.', 'PRODUCT_NOT_FOUND');
   await prisma.product.update({ where: { id }, data: { isActive } });
+  return getProduct(id);
+}
+
+// ----------------------------------------------------------------------------
+// Quick create / edit (the modal form in Admin -> Products)
+// ----------------------------------------------------------------------------
+
+/** "hp elitebook 840" -> "HP", "samsung galaxy" -> "Samsung" */
+export function guessBrand(title: string): string {
+  const first = title.trim().split(/\s+/)[0] ?? '';
+  const word = first.replace(/[^A-Za-z0-9&-]/g, '');
+  if (!word) return 'Generic';
+  if (word.length <= 3) return word.toUpperCase();
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/** Short and full descriptions for a product typed into the quick form. */
+export function quickDescriptions(title: string, description: string): { shortDescription: string; description: string } {
+  const text = description.trim();
+  if (text.length >= 20) {
+    const firstSentence = text.split(/(?<=[.!?])\s/)[0] ?? text;
+    const short = (firstSentence.length >= 10 ? firstSentence : text).slice(0, 300);
+    return { shortDescription: short, description: text };
+  }
+  return {
+    shortDescription: `${title} from ${site.brandName}.`.slice(0, 300),
+    description: `${title}. Sold and supported by ${site.legalName}, with secure Naira payment through Paystack and delivery across Nigeria.`,
+  };
+}
+
+export async function quickCreateProduct(input: QuickProductInput, admin: AdminUser): Promise<AdminProductDetailDTO> {
+  const descriptions = quickDescriptions(input.name, input.description);
+  return createProduct(
+    {
+      name: input.name,
+      slug: '',
+      brand: input.brand || guessBrand(input.name),
+      categoryId: input.categoryId,
+      shortDescription: descriptions.shortDescription,
+      description: descriptions.description,
+      images: input.imageUrl ? [input.imageUrl] : [],
+      specs: input.specs,
+      tags: [],
+      fulfillment: 'PHYSICAL',
+      warrantyMonths: 0,
+      featured: false,
+      isActive: input.isActive,
+      variants: [
+        {
+          sku: `MES-${randomCode(8)}`,
+          name: '',
+          options: [],
+          price: input.price,
+          compareAtPrice: null,
+          stock: input.stock,
+          image: null,
+          isDefault: true,
+          isActive: true,
+        },
+      ],
+    },
+    admin,
+  );
+}
+
+/**
+ * Applies the quick form to an existing product.
+ * - Title, category, brand, main image, specs, description and visibility always update.
+ * - Price and stock update only when the product has a single active variant; products with
+ *   several variants keep their per-variant prices (edit those in the full editor).
+ * - A changed stock count is applied as a logged inventory adjustment ("set to N"), so the
+ *   change appears in the stock history with the admin's email.
+ */
+export async function quickUpdateProduct(id: string, input: QuickProductInput, admin: AdminUser): Promise<AdminProductDetailDTO> {
+  const existing = await getProduct(id);
+  const activeVariants = existing.variants.filter((v) => v.isActive);
+  const single = activeVariants.length <= 1;
+  const target = activeVariants[0] ?? existing.variants[0] ?? null;
+
+  const primary = existing.images[0] ?? '';
+  let images: string[];
+  if (input.imageUrl === primary) images = existing.images;
+  else if (input.imageUrl === '') images = existing.images.slice(1);
+  else images = [input.imageUrl, ...existing.images.filter((image) => image !== input.imageUrl && image !== primary)];
+
+  const descriptions =
+    input.description.trim().length > 0
+      ? quickDescriptions(input.name, input.description)
+      : { shortDescription: existing.shortDescription, description: existing.description };
+
+  const variants: ProductInput['variants'] =
+    existing.variants.length > 0
+      ? existing.variants.map((variant) => {
+          const isTarget = single && target !== null && variant.id === target.id;
+          const price = isTarget ? input.price : variant.price;
+          const compareAt = variant.compareAtPrice && variant.compareAtPrice > price ? variant.compareAtPrice : null;
+          return {
+            id: variant.id,
+            sku: variant.sku,
+            name: variant.name,
+            options: variant.options,
+            price,
+            compareAtPrice: compareAt,
+            stock: variant.stock,
+            image: variant.image,
+            isDefault: variant.isDefault,
+            isActive: isTarget ? true : variant.isActive,
+          };
+        })
+      : [
+          {
+            sku: `MES-${randomCode(8)}`,
+            name: '',
+            options: [],
+            price: input.price,
+            compareAtPrice: null,
+            stock: input.stock,
+            image: null,
+            isDefault: true,
+            isActive: true,
+          },
+        ];
+
+  await updateProduct(
+    id,
+    {
+      name: input.name,
+      slug: existing.slug,
+      brand: input.brand || existing.brand,
+      categoryId: input.categoryId,
+      shortDescription: descriptions.shortDescription,
+      description: descriptions.description,
+      images,
+      specs: input.specs,
+      tags: existing.tags,
+      fulfillment: existing.fulfillment,
+      warrantyMonths: existing.warrantyMonths,
+      featured: existing.featured,
+      isActive: input.isActive,
+      variants,
+    },
+    admin,
+  );
+
+  if (single && target && input.stock !== target.stock) {
+    await adjustStock({
+      variantId: target.id,
+      mode: 'set',
+      quantity: input.stock,
+      reason: 'ADJUSTMENT',
+      note: `Stock count set to ${input.stock} in Products quick edit`,
+      actor: admin.email,
+    });
+  }
+
   return getProduct(id);
 }

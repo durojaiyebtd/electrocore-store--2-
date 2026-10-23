@@ -5,9 +5,10 @@
  */
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AlertIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon } from '@/components/ui/Icons';
+import { AlertIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, SearchIcon } from '@/components/ui/Icons';
 import { Spinner } from '@/components/ui/Spinner';
 import { apiFetch } from '@/lib/api-client';
+import { formatMoney } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import type { OrderStatus } from '@/types';
 
@@ -240,6 +241,12 @@ export function formatDateTime(value: string): string {
   }).format(new Date(value));
 }
 
+/** Amount exactly as charged by Paystack, in the currency of that transaction (minor units). */
+export function formatCharged(amount: number, currency: string): string {
+  const code = currency === 'USD' ? 'USD' : 'NGN';
+  return formatMoney(amount, { currency: code, sourceCurrency: code });
+}
+
 export function formatRelative(value: string): string {
   const diff = Date.now() - new Date(value).getTime();
   const minutes = Math.round(diff / 60000);
@@ -263,3 +270,126 @@ export const adminButton = {
 
 export const adminInput =
   'h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50';
+
+/**
+ * Dialog used by the admin screens (product quick create/edit, order details).
+ * Closes on Escape or a click on the backdrop, traps Tab inside the dialog, locks page
+ * scrolling while open and returns focus to whatever opened it.
+ */
+export function Modal({
+  open,
+  title,
+  description,
+  onClose,
+  children,
+  footer,
+  size = 'md',
+  busy = false,
+}: {
+  open: boolean;
+  title: string;
+  description?: string;
+  onClose: () => void;
+  children: ReactNode;
+  footer?: ReactNode;
+  size?: 'md' | 'lg' | 'xl';
+  /** While true, Escape and backdrop clicks are ignored (e.g. during a save). */
+  busy?: boolean;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const busyRef = useRef(busy);
+  onCloseRef.current = onClose;
+  busyRef.current = busy;
+
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusFirst = () => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      const target = panel.querySelector<HTMLElement>('[data-autofocus], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])');
+      (target ?? panel).focus();
+    };
+    const timer = window.setTimeout(focusFirst, 0);
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !busyRef.current) {
+        event.stopPropagation();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => el.offsetParent !== null);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  const width = size === 'xl' ? 'sm:max-w-4xl' : size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-lg';
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-6" role="presentation">
+      <div
+        className="absolute inset-0 animate-fade-in bg-slate-900/40 motion-reduce:animate-none"
+        aria-hidden="true"
+        onClick={() => {
+          if (!busyRef.current) onClose();
+        }}
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-modal-title"
+        aria-describedby={description ? 'admin-modal-description' : undefined}
+        tabIndex={-1}
+        className={cn('relative flex max-h-[92vh] w-full flex-col rounded-t-2xl bg-white shadow-2xl focus:outline-none sm:rounded-2xl', width)}
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+          <div className="min-w-0">
+            <h2 id="admin-modal-title" className="text-lg font-semibold text-slate-900">
+              {title}
+            </h2>
+            {description ? (
+              <p id="admin-modal-description" className="mt-0.5 text-sm text-slate-500">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="-mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40"
+            aria-label="Close"
+          >
+            <CloseIcon size={18} />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        {footer ? <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 px-5 py-3.5">{footer}</footer> : null}
+      </div>
+    </div>
+  );
+}

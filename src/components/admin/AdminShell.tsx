@@ -8,13 +8,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { LogoMark } from '@/components/layout/Logo';
-import { CartIcon, ChipIcon, CloseIcon, KeyboardIcon, MenuIcon, UserIcon, BoltIcon, WrenchIcon } from '@/components/ui/Icons';
+import { CartIcon, ChipIcon, CloseIcon, KeyboardIcon, LockIcon, MenuIcon, UserIcon, BoltIcon, WrenchIcon } from '@/components/ui/Icons';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
 const NAV = [
   { href: '/admin', label: 'Dashboard', icon: BoltIcon, exact: true },
   { href: '/admin/orders', label: 'Orders', icon: CartIcon },
+  { href: '/admin/transactions', label: 'Transactions', icon: LockIcon },
   { href: '/admin/products', label: 'Products', icon: KeyboardIcon },
   { href: '/admin/inventory', label: 'Inventory', icon: ChipIcon },
   { href: '/admin/customers', label: 'Customers', icon: UserIcon },
@@ -67,7 +68,7 @@ export function AdminShell({ admin, children }: AdminShellProps) {
     try {
       await apiFetch('/api/auth/logout', { method: 'POST' });
     } finally {
-      router.push('/admin/login');
+      router.push('/');
       router.refresh();
     }
   }

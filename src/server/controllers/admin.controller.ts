@@ -14,9 +14,11 @@ import {
   orderListQuerySchema,
   productInputSchema,
   productListQuerySchema,
+  quickProductSchema,
   refundOrderSchema,
   resolveReviewSchema,
   stockAdjustmentSchema,
+  transactionListQuerySchema,
   updateOrderStatusSchema,
 } from '@/lib/admin-validators';
 import { getSupplier } from '@/lib/suppliers';
@@ -24,8 +26,17 @@ import { z } from 'zod';
 import { syncFromSupplier } from '../services/sync.service';
 import { adjustStock } from '../services/inventory.service';
 import { getDashboard, getLowStock } from '../services/admin/dashboard.service';
+import { listTransactions } from '../services/admin/admin-transaction.service';
 import { getOrderDetail, listOrders, refundOrder, resolveReview, updateOrderStatus } from '../services/admin/admin-order.service';
-import { createProduct, getProduct, listProducts, setProductActive, updateProduct } from '../services/admin/admin-product.service';
+import {
+  createProduct,
+  getProduct,
+  listProducts,
+  quickCreateProduct,
+  quickUpdateProduct,
+  setProductActive,
+  updateProduct,
+} from '../services/admin/admin-product.service';
 import {
   createCategory,
   deleteCategory,
@@ -84,6 +95,14 @@ export async function orderResolveReview(req: NextRequest, ctx: RouteContext<{ o
   return ok(await resolveReview(orderNumber, note, admin));
 }
 
+// ----------------------------------------------------------------- Transactions
+
+/** GET /api/admin/transactions?status=&q=&page= — Paystack transaction log */
+export async function transactions(req: NextRequest) {
+  await requireAdmin();
+  return ok(await listTransactions(parseQuery(req, transactionListQuerySchema)));
+}
+
 // ----------------------------------------------------------------- Products
 
 /** GET /api/admin/products?q=&category=&status=&page= */
@@ -114,7 +133,22 @@ export async function productUpdate(req: NextRequest, ctx: RouteContext<{ id: st
   return ok(await updateProduct(id, input, admin));
 }
 
-/** PATCH /api/admin/products/:id  { isActive } — publish / unpublish */
+/** POST /api/admin/products/quick — create from the quick form (title, category, price, stock, image, specs) */
+export async function productQuickCreate(req: NextRequest) {
+  const admin = await requireAdmin();
+  const input = await parseBody(req, quickProductSchema);
+  return ok(await quickCreateProduct(input, admin), { status: 201 });
+}
+
+/** PUT /api/admin/products/:id/quick — edit from the quick form */
+export async function productQuickUpdate(req: NextRequest, ctx: RouteContext<{ id: string }>) {
+  const admin = await requireAdmin();
+  const { id } = await ctx.params;
+  const input = await parseBody(req, quickProductSchema);
+  return ok(await quickUpdateProduct(id, input, admin));
+}
+
+/** PATCH /api/admin/products/:id  { isActive } — publish / archive (hidden products keep their order history) */
 export async function productSetActive(req: NextRequest, ctx: RouteContext<{ id: string }>) {
   await requireAdmin();
   const { id } = await ctx.params;

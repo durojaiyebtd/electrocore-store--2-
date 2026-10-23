@@ -23,7 +23,7 @@ export async function logout() {
   return ok({ loggedOut: true });
 }
 
-/** GET /api/auth/me */
+/** GET /api/auth/me — also refreshes the session cookie if the account's role changed */
 export async function me() {
-  return ok({ user: await authService.currentUser() });
+  return ok({ user: await authService.currentUserWithFreshSession() });
 }
