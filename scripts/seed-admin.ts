@@ -15,6 +15,12 @@
  * Optional: ADMIN_FIRST_NAME and ADMIN_LAST_NAME when creating a new account.
  * The email can also come from the ADMIN_EMAIL environment variable.
  *
+ * On Coolify (or any Docker host): set ADMIN_EMAIL and ADMIN_PASSWORD as environment
+ * variables and redeploy. docker-entrypoint.sh runs this script on every start, so the
+ * account is created (or promoted) and its password is set to ADMIN_PASSWORD.
+ * Remove ADMIN_PASSWORD afterwards if you want to change the password inside the app.
+ * From the Coolify terminal you can also run:  npm run admin:set -- you@example.com
+ *
  * Safe to run more than once. It never deletes anything.
  */
 import bcrypt from 'bcryptjs';
@@ -32,17 +38,26 @@ async function main() {
 
   const existing = await prisma.user.findUnique({ where: { email } });
 
+  const password = process.env.ADMIN_PASSWORD ?? '';
+
   if (existing) {
-    if (existing.role === 'ADMIN') {
+    const data: { role?: 'ADMIN'; passwordHash?: string } = {};
+    if (existing.role !== 'ADMIN') data.role = 'ADMIN';
+    // When ADMIN_PASSWORD is set (e.g. in Coolify), it is the admin's password: apply it so it can be reset from the host.
+    if (password.length >= 10) data.passwordHash = await bcrypt.hash(password, 12);
+    else if (password.length > 0) console.warn('• ADMIN_PASSWORD is shorter than 10 characters, so the password was NOT changed.');
+
+    if (Object.keys(data).length === 0) {
       console.log(`• ${email} is already an ADMIN. Sign in at /login (or /admin/login).`);
       return;
     }
-    await prisma.user.update({ where: { id: existing.id }, data: { role: 'ADMIN' } });
-    console.log(`✔ ${email} is now an ADMIN. Sign in at /login (or /admin/login).`);
+    await prisma.user.update({ where: { id: existing.id }, data });
+    console.log(
+      `✔ ${email} is an ADMIN${data.passwordHash ? ' and its password was set from ADMIN_PASSWORD' : ''}. Sign in at /login (or /admin/login).`,
+    );
     return;
   }
 
-  const password = process.env.ADMIN_PASSWORD ?? '';
   if (password.length < 10) {
     console.error(
       `✖ No account exists for ${email} yet.\n` +
