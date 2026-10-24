@@ -3,6 +3,13 @@
 # The sync only ADDS things (it never passes --accept-data-loss) and is skipped
 # when DATABASE_URL is missing or DB_SYNC=off.
 set -e
+
+# Accept Coolify's internal Mongo URL as-is: add the database name / authSource if missing.
+if [ -n "$DATABASE_URL" ]; then
+  DATABASE_URL="$(node scripts/normalize-db-url.mjs)"
+  export DATABASE_URL
+fi
+
 node scripts/db-sync.mjs
 
 # Admin account from the host's environment variables (ADMIN_EMAIL + ADMIN_PASSWORD).
