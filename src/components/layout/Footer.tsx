@@ -12,7 +12,10 @@ import { Logo } from './Logo';
 const COMPANY_LINKS = [
   { href: '/about', label: 'About us' },
   { href: '/contact', label: 'Contact & support' },
-  { href: '/shop?category=repair-services', label: 'Repair & engineering services' },
+  { href: '/services', label: 'Services' },
+  { href: '/repairs/new', label: 'Request a repair' },
+  { href: '/repairs/book', label: 'Book a repairer' },
+  { href: '/repairs/track', label: 'Track a repair' },
   { href: '/account', label: 'Track your orders' },
 ];
 

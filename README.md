@@ -521,3 +521,15 @@ Reset emails are sent over SMTP, so set these variables on the server (see `.env
 port `465`, and a Google **App Password** (Google Account > Security > 2-Step Verification > App passwords).
 `NEXT_PUBLIC_APP_URL` must be the public address of the site, because it is used to build the reset link.
 Without SMTP settings no email can be sent (the page still answers the same way, and the server log says why).
+
+## Repair services (requests, negotiation, booking)
+
+Customers submit repair requests with photos at `/repairs/new`, get a private tracking link, negotiate the price with your team, book a repairer and pay. You manage everything under **Admin → Repairs** and **Admin → Repairers**.
+
+Before it is useful you must:
+
+1. Add at least one repairer in **Admin → Repairers** (otherwise the booking page says none are available).
+2. Set `REPAIR_BANK_NAME`, `REPAIR_BANK_ACCOUNT_NAME` and `REPAIR_BANK_ACCOUNT_NUMBER` if you want bank transfer offered. Paystack uses the same `PAYSTACK_*` keys as the shop; "pay at the office" needs nothing.
+3. Configure `SMTP_*` and `NEXT_PUBLIC_APP_URL` so customers and staff get email notifications and correct tracking links.
+
+New database collections are created automatically on start-up (`prisma db push`, additive only). Photos are stored in the database, limited to JPEG/PNG/WebP, 3 MB each, 6 per request.

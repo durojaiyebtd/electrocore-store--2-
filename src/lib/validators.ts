@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 import { isNigerianState } from './shipping';
+import { DEVICE_TYPES, REPAIR_SERVICE_SLUGS, SERVICE_MODES } from './repair-constants';
 
 const objectId = z.string().regex(/^[a-f0-9]{24}$/i, 'Invalid ID.');
 
@@ -92,3 +93,83 @@ export const guestSchema = z.object({
 export const verifyQuerySchema = z.object({
   reference: z.string().trim().min(6).max(100).regex(/^[A-Za-z0-9.=-]+$/, 'Invalid payment reference.'),
 });
+
+// ---------------------------------------------------------------- repair services
+
+const nairaToKobo = z.preprocess(
+  (v) => (typeof v === 'string' ? v.replace(/[₦,\s]/g, '') : v),
+  z.coerce.number().positive('Enter an amount greater than zero.').max(100_000_000, 'That amount is too large.').transform((n) => Math.round(n * 100)),
+);
+
+export const repairRequestSchema = z.object({
+  name: z.string().trim().min(2, 'Enter your full name.').max(80),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
+  phone: z.string().trim().min(7, 'Enter a phone number we can reach you on.').max(20).regex(/^[0-9+()\-\s]+$/, 'Phone number can only contain digits, spaces, + ( ) and -.'),
+  serviceSlug: z.enum(REPAIR_SERVICE_SLUGS),
+  deviceType: z.enum(DEVICE_TYPES),
+  brand: z.string().trim().min(1, 'Enter the brand.').max(60),
+  model: z.string().trim().min(1, 'Enter the model.').max(80),
+  serialNumber: z.string().trim().max(60).optional().or(z.literal('')),
+  faultSummary: z.string().trim().min(5, 'Give a short title for the fault.').max(120),
+  faultDetails: z.string().trim().min(15, 'Describe the fault in a little more detail (at least 15 characters).').max(3000),
+  serviceMode: z.enum(SERVICE_MODES).default('WORKSHOP'),
+  address: z.string().trim().max(250).optional().or(z.literal('')),
+});
+
+export const repairMessageSchema = z.object({
+  body: z.string().trim().max(2000).default(''),
+});
+
+export const customerOfferSchema = z.object({
+  amount: nairaToKobo,
+  note: z.string().trim().max(500).optional().or(z.literal('')),
+});
+
+export const offerResponseSchema = z.object({ action: z.enum(['accept', 'reject']) });
+
+export const repairLookupSchema = z.object({
+  reference: z.string().trim().toUpperCase().min(6).max(30),
+  email: z.string().trim().toLowerCase().email('Enter the email you used for the request.'),
+});
+
+export const cancelSchema = z.object({ reason: z.string().trim().max(300).optional().or(z.literal('')) });
+
+export const bookingCreateSchema = z.object({
+  repairerId: z.string().regex(/^[a-f0-9]{24}$/i, 'Choose a repairer.'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a date.'),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'Choose a time.'),
+  mode: z.enum(SERVICE_MODES).default('WORKSHOP'),
+  address: z.string().trim().max(250).optional().or(z.literal('')),
+});
+
+export const payMethodSchema = z.object({ method: z.enum(['PAYSTACK', 'BANK_TRANSFER', 'OFFICE']) });
+
+// Admin side
+export const adminMessageSchema = z.object({ body: z.string().trim().min(1, 'Write a message.').max(2000) });
+export const adminOfferSchema = z.object({
+  amount: nairaToKobo,
+  note: z.string().trim().max(500).optional().or(z.literal('')),
+  turnaround: z.string().trim().max(120).optional().or(z.literal('')),
+});
+export const adminRepairUpdateSchema = z.object({
+  status: z.enum(['REVIEWING', 'IN_PROGRESS', 'READY', 'COMPLETED', 'REJECTED', 'CANCELLED']).optional(),
+  repairerId: z.string().regex(/^[a-f0-9]{24}$/i).nullable().optional(),
+  adminNotes: z.string().trim().max(2000).optional(),
+  note: z.string().trim().max(500).optional(),
+});
+export const adminBookingUpdateSchema = z.object({ status: z.enum(['CONFIRMED', 'CANCELLED', 'COMPLETED']), reason: z.string().trim().max(300).optional() });
+export const adminPaymentSchema = z.object({ amount: nairaToKobo, method: z.enum(['BANK_TRANSFER', 'OFFICE', 'PAYSTACK']) });
+export const repairerSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  title: z.string().trim().max(80).optional().or(z.literal('')),
+  bio: z.string().trim().max(600).optional().or(z.literal('')),
+  phone: z.string().trim().max(20).optional().or(z.literal('')),
+  specialities: z.array(z.string().trim().min(1).max(60)).max(15),
+  serviceAreas: z.array(z.string().trim().min(1).max(60)).max(20),
+  offersOnsite: z.boolean(),
+  workDays: z.array(z.number().int().min(0).max(6)).max(7),
+  startMinutes: z.number().int().min(0).max(1439),
+  endMinutes: z.number().int().min(1).max(1440),
+  slotMinutes: z.number().int().refine((n) => [30, 45, 60, 90, 120].includes(n), 'Slot length must be 30, 45, 60, 90 or 120 minutes.'),
+  active: z.boolean(),
+}).refine((r) => r.endMinutes > r.startMinutes, { message: 'Finish time must be after the start time.', path: ['endMinutes'] });

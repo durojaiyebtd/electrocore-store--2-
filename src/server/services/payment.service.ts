@@ -27,6 +27,7 @@ import type { CheckoutInput } from '@/lib/validators';
 import type { CheckoutInitDTO, VerifyResultDTO } from '@/types';
 import { clearCartById, resolveCart } from './cart.service';
 import { deductStockForOrder } from './inventory.service';
+import { handleRepairWebhook } from './repair-payment.service';
 import { createPendingOrder, orderInclude, toOrderDTO } from './order.service';
 
 export async function initializeCheckout(input: CheckoutInput): Promise<CheckoutInitDTO> {
@@ -310,7 +311,9 @@ export async function handleWebhook(rawBody: string, signature: string | null): 
     if (body.event === 'charge.success' && body.data?.reference) {
       const reference = body.data.reference;
       const known = await prisma.paystackTransaction.findUnique({ where: { reference }, select: { id: true } });
-      if (known) {
+      if (!known && reference.startsWith('RP-') && (await handleRepairWebhook(reference))) {
+        // handled as a repair payment
+      } else if (known) {
         // Defence in depth: confirm with Paystack's API instead of trusting the payload.
         const verified = await verifyTransaction(reference);
         if (verified.status === 'success') {

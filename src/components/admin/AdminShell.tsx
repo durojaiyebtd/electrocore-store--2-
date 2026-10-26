@@ -16,6 +16,8 @@ const NAV = [
   { href: '/admin', label: 'Dashboard', icon: BoltIcon, exact: true },
   { href: '/admin/orders', label: 'Orders', icon: CartIcon },
   { href: '/admin/products', label: 'Products', icon: KeyboardIcon },
+  { href: '/admin/repairs', label: 'Repair requests', icon: WrenchIcon },
+  { href: '/admin/repairers', label: 'Repairers', icon: UserIcon },
   { href: '/admin/transactions', label: 'Transactions', icon: LockIcon },
   { href: '/admin/inventory', label: 'Inventory', icon: ChipIcon },
   { href: '/admin/reports', label: 'Reports', icon: BoltIcon },

@@ -416,3 +416,187 @@ model PasswordResetToken {
   @@index([userId])
   @@map("password_reset_tokens")
 }
+
+// ---------------------------------------------------------------------------------------------
+// Repair services: requests, photos, conversation, quotes, repairers, bookings, payments.
+// Ids that point at other collections are stored as plain ObjectIds (no Prisma relations) so
+// adding these collections never changes the existing ones.
+// ---------------------------------------------------------------------------------------------
+
+enum RepairStatus {
+  SUBMITTED
+  REVIEWING
+  QUOTED
+  NEGOTIATING
+  ACCEPTED
+  SCHEDULED
+  IN_PROGRESS
+  READY
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  SUPERSEDED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model RepairRequest {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  reference     String        @unique
+  /// Secret used in the customer's private tracking link; never shown to other customers.
+  accessCode    String        @unique
+  userId        String?       @db.ObjectId
+  name          String
+  email         String
+  phone         String
+  serviceSlug   String
+  deviceType    String
+  brand         String
+  model         String
+  serialNumber  String?
+  faultSummary  String
+  faultDetails  String
+  /// WORKSHOP (customer comes to us) or ONSITE (repairer comes to the customer, where offered)
+  serviceMode   String        @default("WORKSHOP")
+  address       String?
+  status        RepairStatus  @default(SUBMITTED)
+  repairerId    String?       @db.ObjectId
+  /// Agreed price in kobo, set when an offer is accepted.
+  agreedAmount  Int?
+  paidAmount    Int           @default(0)
+  paymentMethod String?
+  adminNotes    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@map("repair_requests")
+}
+
+model RepairImage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  requestId String   @db.ObjectId
+  messageId String?  @db.ObjectId
+  mimeType  String
+  size      Int
+  data      Bytes
+  fileName  String?
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+  @@map("repair_images")
+}
+
+model RepairMessage {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  requestId  String   @db.ObjectId
+  /// CUSTOMER or ADMIN
+  sender     String
+  authorName String
+  body       String
+  imageIds   String[] @db.ObjectId
+  createdAt  DateTime @default(now())
+
+  @@index([requestId])
+  @@map("repair_messages")
+}
+
+model RepairOffer {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  requestId   String      @db.ObjectId
+  /// Who proposed this price: ADMIN (quotation) or CUSTOMER (counter-offer)
+  by          String
+  amount      Int
+  note        String?
+  turnaround  String?
+  status      OfferStatus @default(PENDING)
+  respondedAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([requestId])
+  @@map("repair_offers")
+}
+
+model RepairEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  requestId String   @db.ObjectId
+  kind      String
+  note      String
+  actor     String
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+  @@map("repair_events")
+}
+
+model Repairer {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  title        String?
+  bio          String?
+  phone        String?
+  specialities String[]
+  serviceAreas String[]
+  offersOnsite Boolean  @default(false)
+  /// Working days, 0 = Sunday ... 6 = Saturday
+  workDays     Int[]
+  /// Working hours as minutes after midnight (West Africa Time)
+  startMinutes Int      @default(540)
+  endMinutes   Int      @default(1020)
+  slotMinutes  Int      @default(60)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("repairers")
+}
+
+model RepairBooking {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  reference    String        @unique
+  /// `${repairerId}|${startsAt ISO}` while the booking holds its slot (unique, so a slot can never be double-booked); `released|${id}` once cancelled.
+  slotKey      String        @unique
+  requestId    String        @db.ObjectId
+  repairerId   String        @db.ObjectId
+  startsAt     DateTime
+  endsAt       DateTime
+  mode         String        @default("WORKSHOP")
+  address      String?
+  status       BookingStatus @default(PENDING)
+  cancelReason String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([repairerId, startsAt])
+  @@index([requestId])
+  @@map("repair_bookings")
+}
+
+model RepairPayment {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  requestId       String    @db.ObjectId
+  reference       String    @unique
+  amount          Int
+  /// INITIALIZED, SUCCESS or FAILED
+  status          String    @default("INITIALIZED")
+  channel         String?
+  gatewayResponse String?
+  authorizationUrl String?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([requestId])
+  @@map("repair_payments")
+}

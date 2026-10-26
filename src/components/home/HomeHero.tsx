@@ -77,7 +77,7 @@ export function HomeHero({ categories, spotlight, content }: { categories: Categ
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <PromoTile href="/shop?category=repair-services" title="Repairs & installs" body="Screen, battery and board-level repair by our engineers." tone="bg-volt-400/25 border-volt-400" />
+          <PromoTile href="/services/device-diagnosis-repair" title="Repairs & installs" body="Screen, battery and board-level repair by our engineers." tone="bg-volt-400/25 border-volt-400" />
           <PromoTile href="/shop" title="Free delivery" body="On orders of ₦500,000 and above, to all 36 states and the FCT." tone="bg-brand-50 border-brand-200" />
         </div>
       </div>

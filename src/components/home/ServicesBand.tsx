@@ -7,6 +7,7 @@ const SERVICES = [
     title: 'Diagnosis and repair',
     body: 'Screens, batteries, boards, charging ports and data recovery for phones, laptops and desktops. Written quote before any work begins.',
     href: '/product/device-diagnostic-repair-booking',
+    learn: '/services/device-diagnosis-repair',
     cta: 'Book a diagnosis',
   },
   {
@@ -14,6 +15,7 @@ const SERVICES = [
     title: 'Custom PC assembly',
     body: 'Bring your parts or buy them here. We build, cable-manage, install the OS and stress-test for 12 hours before handover.',
     href: '/product/custom-pc-assembly-service',
+    learn: '/services/custom-pc-assembly',
     cta: 'Start a build',
   },
   {
@@ -21,6 +23,7 @@ const SERVICES = [
     title: 'Mobile app development',
     body: 'From requirements to a fixed quote in two to three weeks, credited in full when you build with us.',
     href: '/product/mobile-app-development-discovery',
+    learn: '/services/mobile-app-development',
     cta: 'Plan your app',
   },
 ];
@@ -46,9 +49,14 @@ export function ServicesBand() {
                 <Icon size={26} className="text-brand-600" />
                 <h3 className="mt-4 text-lg font-semibold text-slate-900">{service.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{service.body}</p>
-                <Link href={service.href} className="mt-5 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline">
-                  {service.cta}
-                </Link>
+                <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold">
+                  <Link href={service.href} className="text-brand-700 underline-offset-4 hover:underline">
+                    {service.cta}
+                  </Link>
+                  <Link href={service.learn} className="text-slate-700 underline-offset-4 hover:underline" aria-label={`Learn more about ${service.title}`}>
+                    Learn more
+                  </Link>
+                </div>
               </li>
             );
           })}
