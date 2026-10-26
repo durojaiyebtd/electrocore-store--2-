@@ -153,7 +153,7 @@ export async function image(req: NextRequest, ctx: RouteContext<{ id: string }>)
 
 /** GET /api/repairers */
 export async function listRepairers() {
-  return ok({ repairers: await repairers.listActiveRepairers() });
+  return ok({ repairers: await repairers.listActiveRepairers(), office: repairers.officeInfo() });
 }
 
 /** GET /api/repairers/:id/slots?date=YYYY-MM-DD */

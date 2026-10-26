@@ -529,7 +529,8 @@ Customers submit repair requests with photos at `/repairs/new`, get a private tr
 Before it is useful you must:
 
 1. Add at least one repairer in **Admin → Repairers** (otherwise the booking page says none are available).
-2. Set `REPAIR_BANK_NAME`, `REPAIR_BANK_ACCOUNT_NAME` and `REPAIR_BANK_ACCOUNT_NUMBER` if you want bank transfer offered. Paystack uses the same `PAYSTACK_*` keys as the shop; "pay at the office" needs nothing.
-3. Configure `SMTP_*` and `NEXT_PUBLIC_APP_URL` so customers and staff get email notifications and correct tracking links.
+2. Set `NEXT_PUBLIC_BUSINESS_ADDRESS_LINE1`, `NEXT_PUBLIC_BUSINESS_CITY` and `NEXT_PUBLIC_BUSINESS_STATE` to your real office address. It is shown to customers booking an office visit, on tracking pages and in Admin → Repairers (which warns you while it is empty). In Coolify, add them as environment variables **and redeploy** (they are baked in at build time).
+3. Set `REPAIR_BANK_NAME`, `REPAIR_BANK_ACCOUNT_NAME` and `REPAIR_BANK_ACCOUNT_NUMBER` if you want bank transfer offered. Paystack uses the same `PAYSTACK_*` keys as the shop; "pay at the office" needs nothing.
+4. Configure `SMTP_*` and `NEXT_PUBLIC_APP_URL` so customers and staff get email notifications and correct tracking links.
 
 New database collections are created automatically on start-up (`prisma db push`, additive only). Photos are stored in the database, limited to JPEG/PNG/WebP, 3 MB each, 6 per request.

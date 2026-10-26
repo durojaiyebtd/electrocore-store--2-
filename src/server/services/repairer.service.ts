@@ -13,7 +13,8 @@ import { minutesToClock } from '@/lib/repair-constants';
 import { clockToMinutes, formatWatDateTime, isValidDate, todayInWat, watToUtc, weekdayOf } from '@/lib/repair-time';
 import { notifyCustomer, notifyStaff } from '@/lib/repair-notify';
 import type { bookingCreateSchema, repairerSchema } from '@/lib/validators';
-import type { RepairerDTO, SlotDTO } from '@/types/repair';
+import { formattedAddress, site } from '@/lib/site';
+import type { OfficeDTO, RepairerDTO, SlotDTO } from '@/types/repair';
 import { addEvent, assertOpen } from './repair.service';
 
 type BookingInput = z.infer<typeof bookingCreateSchema>;
@@ -31,6 +32,11 @@ function toDTO(r: {
     id: r.id, name: r.name, title: r.title, bio: r.bio, phone: r.phone, specialities: r.specialities, serviceAreas: r.serviceAreas,
     offersOnsite: r.offersOnsite, workDays: [...r.workDays].sort(), startMinutes: r.startMinutes, endMinutes: r.endMinutes, slotMinutes: r.slotMinutes, active: r.active,
   };
+}
+
+/** The workshop / office address and opening hours, from the business settings. */
+export function officeInfo(): OfficeDTO {
+  return { address: formattedAddress() || null, hours: site.businessHours };
 }
 
 /* ------------------------------------------------------------------ public */

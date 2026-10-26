@@ -45,6 +45,7 @@ export interface RepairPaymentOptionsDTO {
 }
 
 export interface RepairRequestDTO {
+  workshopAddress: string | null;
   id: string;
   reference: string;
   accessCode?: string;
@@ -93,6 +94,9 @@ export interface RepairListItemDTO {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Where customers bring devices (from the business address settings); null when not configured yet. */
+export interface OfficeDTO { address: string | null; hours: string }
 
 export interface RepairerDTO {
   id: string;

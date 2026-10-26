@@ -79,7 +79,7 @@ export async function updateBooking(req: NextRequest, ctx: RouteContext<{ id: st
 
 export async function listRepairers() {
   await requireAdmin();
-  return ok({ repairers: await repairers.listAllRepairers() });
+  return ok({ repairers: await repairers.listAllRepairers(), office: repairers.officeInfo() });
 }
 
 export async function createRepairer(req: NextRequest) {

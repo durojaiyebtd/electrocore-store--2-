@@ -5,6 +5,7 @@
  */
 import type { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { formattedAddress } from '@/lib/site';
 import { ApiError } from '@/lib/http';
 import { getSession } from '@/lib/auth';
 import { generateToken, randomCode } from '@/lib/ids';
@@ -57,6 +58,7 @@ export async function buildRequestDTO(row: {
   return {
     id: row.id,
     reference: row.reference,
+    workshopAddress: formattedAddress() || null,
     accessCode: forAdmin ? undefined : row.accessCode,
     name: row.name,
     email: row.email,

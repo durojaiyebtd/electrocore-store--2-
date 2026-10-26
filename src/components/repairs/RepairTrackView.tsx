@@ -196,7 +196,7 @@ export function RepairTrackView({ code }: { code: string }) {
             {r.bookings.map((b) => (
               <li key={b.id} className="rounded-lg bg-slate-50 px-4 py-3 text-sm">
                 <p className="font-semibold text-slate-900">{formatWatDateTime(b.startsAt)} · {b.repairerName}</p>
-                <p className="text-slate-600">{b.mode === 'ONSITE' ? `On-site visit${b.address ? `: ${b.address}` : ''}` : 'At our workshop'} · Ref {b.reference}</p>
+                <p className="text-slate-600">{b.mode === 'ONSITE' ? `On-site visit${b.address ? `: ${b.address}` : ''}` : `At our office${r.workshopAddress ? `: ${r.workshopAddress}` : ''}`} · Ref {b.reference}</p>
                 <p className="mt-1"><span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${b.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-800' : b.status === 'PENDING' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'}`}>{BOOKING_STATUS_LABEL[b.status]}</span>{b.cancelReason ? <span className="ml-2 text-slate-500">{b.cancelReason}</span> : null}</p>
                 {b.status === 'PENDING' || b.status === 'CONFIRMED' ? <button type="button" disabled={busy !== null} onClick={() => act('cancel-booking', () => apiFetch<{ request: RepairRequestDTO }>(`${base}/bookings/${b.id}/cancel`, { method: 'POST', body: { reason: 'Cancelled by customer' } }))} className="mt-2 text-sm font-semibold text-rose-700 underline">Cancel this appointment</button> : null}
               </li>

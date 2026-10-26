@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
 import { apiFetch } from '@/lib/api-client';
 import { WEEKDAYS, minutesToClock } from '@/lib/repair-constants';
-import type { RepairerDTO } from '@/types/repair';
+import type { OfficeDTO, RepairerDTO } from '@/types/repair';
 import { EmptyState, ErrorBanner, LoadingBlock, PageHeader, Panel, Pill, adminButton, adminInput, useAdminQuery } from './ui';
 
 interface FormState {
@@ -21,7 +21,7 @@ function toMinutes(clock: string): number { const [h, m] = clock.split(':').map(
 const splitList = (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean);
 
 export function AdminRepairersView() {
-  const { data, error, loading, reload } = useAdminQuery<{ repairers: RepairerDTO[] }>('/api/admin/repairers');
+  const { data, error, loading, reload } = useAdminQuery<{ repairers: RepairerDTO[]; office?: OfficeDTO }>('/api/admin/repairers');
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -64,6 +64,13 @@ export function AdminRepairersView() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Repairers" description="The people customers can book. Set their specialities, service areas, working days and hours (West Africa Time)." actions={<button type="button" onClick={() => { setFormError(null); setForm({ ...EMPTY }); }} className={adminButton.primary}>Add a repairer</button>} />
+      {data ? (
+        data.office?.address ? (
+          <p className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"><span className="font-semibold text-slate-900">Company address shown to customers for office visits:</span> {data.office.address} · {data.office.hours}</p>
+        ) : (
+          <p role="alert" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900"><span className="font-semibold">Company address not set.</span> Customers booking an office visit are told the address will follow. Set <code>NEXT_PUBLIC_BUSINESS_ADDRESS_LINE1</code>, <code>NEXT_PUBLIC_BUSINESS_CITY</code> and <code>NEXT_PUBLIC_BUSINESS_STATE</code> in your hosting settings and redeploy.</p>
+        )
+      ) : null}
       {message ? <p role="status" className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{message}</p> : null}
 
       {form ? (

@@ -209,7 +209,7 @@ export function AdminRepairDetailView({ id }: { id: string }) {
               {r.bookings.length === 0 ? <p className="text-slate-500">No appointment booked.</p> : r.bookings.map((b) => (
                 <div key={b.id} className="rounded-lg bg-slate-50 px-3 py-2">
                   <p className="font-semibold">{formatWatDateTime(b.startsAt)}</p>
-                  <p className="text-slate-600">{b.repairerName} · {b.mode === 'ONSITE' ? `On-site: ${b.address ?? ''}` : 'Workshop'} · {b.reference}</p>
+                  <p className="text-slate-600">{b.repairerName} · {b.mode === 'ONSITE' ? `On-site: ${b.address ?? ''}` : (r.workshopAddress ? `Office: ${r.workshopAddress}` : 'Office')} · {b.reference}</p>
                   <p className="mt-1"><Pill tone={b.status === 'CONFIRMED' || b.status === 'COMPLETED' ? 'green' : b.status === 'PENDING' ? 'amber' : 'slate'}>{b.status.toLowerCase()}</Pill></p>
                   {b.status === 'PENDING' || b.status === 'CONFIRMED' ? (
                     <div className="mt-2 flex flex-wrap gap-2">

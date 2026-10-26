@@ -5,7 +5,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { apiFetch } from '@/lib/api-client';
 import { WEEKDAYS, minutesToClock } from '@/lib/repair-constants';
 import { todayInWat } from '@/lib/repair-time';
-import type { RepairerDTO, SlotDTO } from '@/types/repair';
+import type { OfficeDTO, RepairerDTO, SlotDTO } from '@/types/repair';
 
 export interface BookingChoice { repairerId: string; date: string; time: string }
 
@@ -20,12 +20,13 @@ interface Props {
 export function BookingPicker({ mode, value, onChange, idPrefix }: Props) {
   const [repairers, setRepairers] = useState<RepairerDTO[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [office, setOffice] = useState<OfficeDTO | null>(null);
   const [slots, setSlots] = useState<SlotDTO[] | null>(null);
   const [slotsBusy, setSlotsBusy] = useState(false);
 
   useEffect(() => {
-    apiFetch<{ repairers: RepairerDTO[] }>('/api/repairers')
-      .then((r) => setRepairers(r.repairers))
+    apiFetch<{ repairers: RepairerDTO[]; office?: OfficeDTO }>('/api/repairers')
+      .then((r) => { setRepairers(r.repairers); setOffice(r.office ?? null); })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load repairers.'));
   }, []);
 
@@ -56,6 +57,13 @@ export function BookingPicker({ mode, value, onChange, idPrefix }: Props) {
       {mode === 'ONSITE' && visible.length === 0 ? (
         <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">None of our repairers offers on-site visits at the moment. Choose the workshop option instead.</p>
       ) : null}
+      {mode === 'WORKSHOP' ? (
+        <div className="rounded-lg border border-brand-100 bg-brand-50 p-3 text-sm text-slate-800">
+          <p className="font-semibold text-brand-800">Bring your device to our office</p>
+          <p>{office?.address ?? 'We will send you the office address when your appointment is confirmed.'}</p>
+          {office?.hours ? <p className="text-slate-600">Open {office.hours}</p> : null}
+        </div>
+      ) : null}
       <fieldset>
         <legend className="field-label">Choose a repairer</legend>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -70,7 +78,7 @@ export function BookingPicker({ mode, value, onChange, idPrefix }: Props) {
                 {r.specialities.length ? <p className="mt-2 text-slate-700"><span className="font-medium">Specialities:</span> {r.specialities.join(', ')}</p> : null}
                 {r.serviceAreas.length ? <p className="text-slate-700"><span className="font-medium">Areas:</span> {r.serviceAreas.join(', ')}</p> : null}
                 <p className="text-slate-700"><span className="font-medium">Available:</span> {r.workDays.map((d) => WEEKDAYS[d].slice(0, 3)).join(', ') || 'No days set'}, {minutesToClock(r.startMinutes)} – {minutesToClock(r.endMinutes)}</p>
-                <p className="text-slate-700"><span className="font-medium">On-site visits:</span> {r.offersOnsite ? 'Yes' : 'Workshop only'}</p>
+                <p className="text-slate-700"><span className="font-medium">On-site visits:</span> {r.offersOnsite ? 'Yes' : 'Office visits only'}</p>
               </label>
             );
           })}
