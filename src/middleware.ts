@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // The sign-in pages themselves must stay reachable
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin/login' || pathname === '/admin/forgot-password' || pathname === '/admin/reset-password') {
     return NextResponse.next();
   }
 

@@ -71,6 +71,20 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password.'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().regex(/^[a-f0-9]{64}$/, 'This reset link is not valid.'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters.')
+    .max(128)
+    .regex(/[A-Za-z]/, 'Password must contain a letter.')
+    .regex(/\d/, 'Password must contain a number.'),
+});
+
 export const guestSchema = z.object({
   email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
 });

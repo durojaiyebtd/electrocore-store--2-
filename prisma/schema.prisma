@@ -403,3 +403,16 @@ model SiteSetting {
 
   @@map("site_settings")
 }
+
+/// One-time password reset links. Only a SHA-256 hash of the token is stored, never the token itself.
+model PasswordResetToken {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}

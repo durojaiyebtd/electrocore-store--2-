@@ -11,6 +11,9 @@ function env(name: string, fallback = ''): string {
 const appUrl = env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000').replace(/\/+$/, '');
 const domain = env('NEXT_PUBLIC_SITE_DOMAIN', 'localhost');
 
+/** The one customer-facing contact address (storefront, footer, contact page, policies). */
+export const SUPPORT_EMAIL = 'magnificantelectrocoresynergy@gmail.com';
+
 export const site = {
   legalName: 'MAGNIFICENT ELECTROCORE SYNERGY LTD',
   brandName: 'Magnificent ElectroCore',
@@ -24,7 +27,7 @@ export const site = {
     'Manufacturing, designing, developing, assembling, buying, selling, resampling, distributing, marketing, servicing, repairing, altering, and dealing in electrical and electronic devices, gadgets, computers, computer parts, accessories, peripherals, software packages, and mobile applications.',
   url: appUrl,
   domain,
-  supportEmail: env('NEXT_PUBLIC_SUPPORT_EMAIL', `support@${domain}`),
+  supportEmail: SUPPORT_EMAIL,
   supportPhone: env('NEXT_PUBLIC_SUPPORT_PHONE'),
   businessHours: env('NEXT_PUBLIC_BUSINESS_HOURS', 'Mon – Sat, 8:00am – 6:00pm WAT'),
   address: {

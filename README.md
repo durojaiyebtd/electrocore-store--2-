@@ -293,7 +293,7 @@ Do the local steps in section 0 first so you know the project works on your comp
    | `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | your Paystack keys (use `sk_test_…` until you are ready to take real money) |
    | `PAYSTACK_MOCK_MODE` | `false` |
    | `NEXT_PUBLIC_APP_URL` | your Railway address, then your own domain later |
-   | `NEXT_PUBLIC_BUSINESS_ADDRESS_LINE1`, `NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_SUPPORT_PHONE` | your real details |
+   | `NEXT_PUBLIC_BUSINESS_ADDRESS_LINE1`, `NEXT_PUBLIC_SUPPORT_PHONE` | your real details |
 
    `NEXT_PUBLIC_…` values are baked in at build time, so change them and **redeploy**.
 6. **Get a web address.** Service → **Settings → Networking → Generate Domain**. Open it, then check
@@ -510,3 +510,14 @@ and are converted for display and for the Paystack charge. Your Paystack account
 - [ ] `PAYSTACK_MOCK_MODE="false"`
 
 © MAGNIFICENT ELECTROCORE SYNERGY LTD (RC No: 9792926). All rights reserved.
+
+## Forgot password (admin sign-in)
+
+`/admin/login` has a "Forgot password?" link. It emails a one-time reset link that expires after 30 minutes
+and can be used once. Only a hash of the link token is stored in the database.
+
+Reset emails are sent over SMTP, so set these variables on the server (see `.env.example`):
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`. For a Gmail address use `smtp.gmail.com`,
+port `465`, and a Google **App Password** (Google Account > Security > 2-Step Verification > App passwords).
+`NEXT_PUBLIC_APP_URL` must be the public address of the site, because it is used to build the reset link.
+Without SMTP settings no email can be sent (the page still answers the same way, and the server log says why).

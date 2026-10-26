@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { LogoMark } from '@/components/layout/Logo';
 import { AlertIcon, LockIcon } from '@/components/ui/Icons';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Spinner } from '@/components/ui/Spinner';
 import { apiFetch } from '@/lib/api-client';
 import type { SessionUserDTO } from '@/types';
@@ -69,8 +70,13 @@ export function AdminLoginView() {
               <input id="admin-email" type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label htmlFor="admin-password" className="field-label">Password</label>
-              <input id="admin-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-input" />
+              <div className="flex items-center justify-between">
+                <label htmlFor="admin-password" className="field-label">Password</label>
+                <Link href="/admin/forgot-password" className="text-sm font-medium text-brand-700 underline-offset-4 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <PasswordInput id="admin-password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
           </div>
           {!error && searchParams.get('error') === 'unauthorized' ? (
