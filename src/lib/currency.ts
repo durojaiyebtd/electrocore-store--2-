@@ -59,7 +59,7 @@ export function getStoreCurrency(): CurrencyCode {
 
 /** Naira per 1 US Dollar. */
 export function getNgnPerUsd(): number {
-  const rate = Number(process.env.NEXT_PUBLIC_NGN_PER_USD ?? '1550');
+  const rate = Number((process.env.NEXT_PUBLIC_NGN_PER_USD ?? '').trim() || '1550');
   return Number.isFinite(rate) && rate > 0 ? rate : 1550;
 }
 

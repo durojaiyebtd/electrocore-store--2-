@@ -55,7 +55,9 @@ export function zoneForState(state: string): ShippingZone {
 }
 
 export function freeShippingThreshold(): number {
-  const naira = Number(process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_NGN ?? '500000');
+  // An empty value (a build argument with no value) must fall back to the default, not become 0.
+  const raw = (process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_NGN ?? '').trim();
+  const naira = raw === '' ? 500000 : Number(raw);
   return toMinor(Number.isFinite(naira) && naira >= 0 ? naira : 500000);
 }
 

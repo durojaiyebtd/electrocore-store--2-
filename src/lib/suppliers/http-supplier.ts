@@ -81,7 +81,7 @@ function config() {
   if (!baseUrl) {
     throw new Error('SUPPLIER_API_URL is not set. Add it to .env or switch SUPPLIER_PROVIDER back to "mock".');
   }
-  const markup = Number(process.env.SUPPLIER_MARKUP_PERCENT ?? '0');
+  const markup = Number((process.env.SUPPLIER_MARKUP_PERCENT ?? '').trim() || '0');
   return {
     baseUrl,
     apiKey: process.env.SUPPLIER_API_KEY ?? '',

@@ -163,7 +163,8 @@ export function shortDescriptionFor(item: TechnocratItem): string {
 }
 
 function defaultStock(): number {
-  const value = Number(process.env.TECHNOCRAT_DEFAULT_STOCK ?? '10');
+  const raw = (process.env.TECHNOCRAT_DEFAULT_STOCK ?? '').trim();
+  const value = raw === '' ? 10 : Number(raw);
   return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 10;
 }
 

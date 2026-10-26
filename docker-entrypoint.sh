@@ -19,4 +19,11 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$DATABASE_URL" ]; then
   npx tsx scripts/seed-admin.ts || echo "[admin] Could not set up the admin account (see the message above)."
 fi
 
+# First start only: load the product catalog when the store has no products yet.
+# Never creates a default admin and never touches existing products. A failure is reported
+# but never stops the site from starting. Set SEED_CATALOG=off to disable.
+if [ -n "$DATABASE_URL" ]; then
+  npx tsx scripts/seed-catalog.ts || echo "[catalog] Could not load the catalog (see the message above)."
+fi
+
 exec "$@"
